@@ -28,6 +28,13 @@ class PGMQuadtree:
     def bounds(self):
         return self.__bounds
     @property
+    def pos(self): # describes the center position of the cell/node
+        return (self.X+self.WIDTH//2,self.Y+self.HEIGHT//2)
+    @property
+    def origin(self): # describes the origin of the cell -> top-left of the bounding box
+        return (self.X,self.Y)
+
+    @property
     def occupied(self):
         return self.__occupied
 
@@ -169,7 +176,7 @@ def build_tree(im,resolution=7):
     return PGMQuadtree(pgm=im,bounds=(0,0,SIZE,SIZE),max_depth=resolution)
 
 def build_graph(quadtree):
-    _,_,_,HEIGHT = quadtree.bounds
+    HEIGHT = quadtree.HEIGHT
     G = nx.Graph()
     queue = []
     pos = (0,0)
@@ -180,7 +187,7 @@ def build_graph(quadtree):
         if tree.bounds in visited:
             continue
         visited.add(tree.bounds)
-        G.add_node(tree.bounds,pos=(tree.X,HEIGHT-tree.Y),occupied=tree.occupied)
+        G.add_node(tree.bounds,origin=(tree.X,HEIGHT-tree.Y),pos=tree.pos, occupied=tree.occupied)
 
         for npos in tree.SURROUNDING:
             if quadtree.inbounds(npos):
@@ -192,13 +199,13 @@ def build_graph(quadtree):
                         G.add_edge(tree.bounds,subtree.bounds)
     return G
 
-def draw_path(im,path,duration_ms=0):
+def draw_path(im,path):
     imcp = im.copy()
     mark_bounds(imcp,path)
     return imcp
 
 def main():
-    im = cv2.imread("map.pgm",cv2.IMREAD_GRAYSCALE)
+    im = cv2.imread("./maps/map.pgm",cv2.IMREAD_GRAYSCALE)
 
     resolution = 7
     quadtree = build_tree(im,resolution)
@@ -217,9 +224,9 @@ def main():
         except nx.NetworkXNoPath:
             path = [start,goal]
 
-        imcp = draw_path(im,path,100)
+        imcp = draw_path(im,path)
         cv2.imshow("Path",imcp)
-        cv2.waitKey(100)
+        cv2.waitKey(0)
 
 if __name__ == "__main__":
     main()
