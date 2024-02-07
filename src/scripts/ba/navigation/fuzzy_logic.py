@@ -49,89 +49,48 @@ def calcVelocity(scan):
     #indizes = inFront(angles)
     #(X,Y) = calcVectors(angles[indizes])*dist_arr[indizes]
     (X,Y) = calcVectors(angles)*dist_arr
-    x = np.sum(X)/len(X)
-    y = np.sum(Y)/len(Y)
+    x = np.average(X) #np.sum(X)/len(X)
+    y = np.average(Y) #np.sum(Y)/len(Y)
     
     return x,y,min_dist
 
 def main():
-    rospy.init_node("motor")
+    rospy.init_node("fuzzy_drive")
 
     scan = ScanData()
-    vis_pub = rospy.Publisher("/cmd_vel_stamped",TwistStamped,queue_size = 10)
-    vis_dir_pub = rospy.Publisher("/cmd_dir_stamped",TwistStamped,queue_size=10)
-    
     sub = rospy.Subscriber("/scan",LaserScan,scan.setData)
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
 
-    tf_listener = tf.TransformListener()
+    max_lin_spd = 0.5
+    min_gap = 1
 
     running = True
     rate = rospy.Rate(10)
-    seq = 0
     while running:
         dir_vel = Twist()
         dir_vel.linear.x = 1
-        #try:
-        #    pose = PoseStamped(header=Header(frame_id="map",stamp=rospy.Time.now()-rospy.Duration(0.1)))
-        #    pose.pose.position.x,pose.pose.position.y = (0,0)
-
-        #    bf_pose = tf_listener.transformPose("base_footprint",pose)
-        #    x = bf_pose.pose.position.x
-        #    y = bf_pose.pose.position.y
-        #    s = math.sqrt(x**2+y**2)
-            #print(x,y,math.atan2(math.sin(y),math.cos(x)))
-        #    dir_vel.linear.x = x/s#-min(1,max(-1,x/s))
-        #    dir_vel.angular.z = y/s#-min(1,max(-1,y/s))
-            #vel_pub.publish(dir_vel)
-        #except Exception as e:
-        #    rospy.loginfo(e)
 
         x,y,min_dist = calcVelocity(scan)
-
         alpha = math.atan2(x,y)
-        #print(alpha)
+        
+        if -math.pi <= alpha < 0:
+            fdir = radians(90)
+        else:
+            fdir = -radians(90)
+        
         try:
-            header = Header(frame_id="base_footprint",stamp=rospy.Time.now(),seq=seq)
-            seq += 1
-
-            vis_msg = TwistStamped(header=header)
-            vis_dir = TwistStamped(header=header)
-            #print(msg.twist)
-
-            #x_vel = math.cos(alpha)
-            #y_vel = math.sin(alpha)
-
             vel = Twist()
-            #vel.linear.x = x_vel
-            #vel.angular.z = y_vel
-
-            #beta = math.atan2(math.sin(dir_vel.angular.z),math.cos(dir_vel.linear.x))
-            #print(f"beta: {beta}")
-            if min_dist > 3:
+            if min_dist > min_gap:
                 vel.linear.x = math.cos(alpha)
                 vel.angular.z = math.sin(alpha)
             elif -math.pi <= alpha < 0:
-                vel.linear.x = math.cos(alpha +radians(90))
-                vel.angular.z = math.sin(alpha +radians(90))
+                vel.linear.x = math.cos(alpha +fdir)
+                vel.angular.z = math.sin(alpha +fdir)
             else:
-                vel.linear.x = math.cos(alpha -radians(90))
-                vel.angular.z = math.sin(alpha -radians(90))
+                vel.linear.x = math.cos(alpha +fdir)
+                vel.angular.z = math.sin(alpha +fdir)
 
-            #vel.linear.x += dir_vel.linear.x
-            #vel.angular.z += dir_vel.angular.z
-            #vel.linear.x /= 2
-            #vel.angular.z /= 2
-                
-            vel.linear.x = max(vel.linear.x,0)
-
-            vis_msg.twist.linear.x = vel.linear.x
-            vis_msg.twist.linear.y = vel.angular.z
-            vis_dir.twist.linear.x = dir_vel.linear.x
-            vis_dir.twist.linear.y = dir_vel.angular.z
-
-            vis_pub.publish(vis_msg)
-            vis_dir_pub.publish(vis_dir)
+            vel.linear.x = max(min(vel.linear.x,max_lin_spd),-max_lin_spd)
             vel_pub.publish(vel)
 
             rate.sleep()

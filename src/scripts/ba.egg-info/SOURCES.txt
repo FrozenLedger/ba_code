@@ -7,9 +7,9 @@ ba.egg-info/dependency_links.txt
 ba.egg-info/top_level.txt
 ba/navigation/__init__.py
 ba/navigation/contour_following.py
+ba/navigation/contour_segments.py
 ba/navigation/fuzzy.py
 ba/navigation/fuzzy_logic.py
-ba/navigation/global_planner.py
 ba/navigation/gridmapper.py
 ba/navigation/navigator.py
 ba/navigation/splitmap_searchtree.py
@@ -21,4 +21,3 @@ ba/utilities/data.py
 ba/visualization/__init__.py
 ba/visualization/cone_visualizer.py
 ba/visualization/lidar_visualizer.py
-ba/visualization/path_visualizer.py

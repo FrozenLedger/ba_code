@@ -25,7 +25,7 @@ def calcVelocity(scan,max_range=12):
     dist_arr = np.array(scan.data.ranges)
 
     if len(dist_arr) <= 0:
-        return (1,0,0)
+        return (0,0,0)
     
     min_dist = np.min(dist_arr)
     if min_dist == math.inf:
@@ -43,8 +43,8 @@ def calcVelocity(scan,max_range=12):
     #indizes = inFront(angles)
     #(X,Y) = calcVectors(angles[indizes])*dist_arr[indizes]
     (Y,X) = calcVectors(angles)*dist_arr
-    x = np.sum(X)/len(X)
-    y = np.sum(Y)/len(Y)
+    x = np.average(X) #np.sum(X)/len(X)
+    y = np.average(Y) #np.sum(Y)/len(Y)
     
     return x,y,min_dist
 
@@ -53,8 +53,8 @@ def main():
 
     scan = LaserScanData()
     sub = rospy.Subscriber("/scan",LaserScan,scan.setData)
-    fuzzy_vis_pub = rospy.Publisher("/fuzzy_visual",TwistStamped,queue_size=10)
-    forward_vis_pub = rospy.Publisher("/forward_visual",TwistStamped,queue_size=10)
+    #fuzzy_vis_pub = rospy.Publisher("/fuzzy_visual",TwistStamped,queue_size=10)
+    #forward_vis_pub = rospy.Publisher("/forward_visual",TwistStamped,queue_size=10)
 
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
     
@@ -86,8 +86,8 @@ def main():
                 twist.linear.y = z_rot
                 fuzzy_vis = TwistStamped(header=header)
                 fuzzy_vis.twist = twist
-                fuzzy_vis_pub.publish(fuzzy_vis)
-                forward_vis_pub.publish(forward_vel)
+                #fuzzy_vis_pub.publish(fuzzy_vis)
+                #forward_vis_pub.publish(forward_vel)
 
                 vel = Twist()
                 vel.linear.x = min(1,max(-1,forward_vel.twist.linear.x - fuzzy_vis.twist.linear.x))*0.5
