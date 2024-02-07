@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='ba_code',
+    name='ba',
     version='0.0.1',
     author='Denny Falls Rodriguez',
     author_email='denny.falls-rodriguez@stud.hs-bochum.de',
