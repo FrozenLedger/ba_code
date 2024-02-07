@@ -2,3 +2,5 @@ maps/
 sonstige/
 __pycache__
 log/
+ba/
+ba.egg-info/
