@@ -61,8 +61,8 @@ def main():
     sub = rospy.Subscriber("/scan",LaserScan,scan.setData)
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
 
-    max_lin_spd = 0.5
-    min_gap = 1
+    max_lin_spd = 0.4
+    min_gap = 3
 
     running = True
     rate = rospy.Rate(10)
