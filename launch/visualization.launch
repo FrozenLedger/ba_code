@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="ba_code" type="lidar_visualizer.py" name="lidar_visualizer" output="screen"></node>
+</launch>

@@ -66,7 +66,7 @@ def main():
 
     running = True
     rate = rospy.Rate(10)
-    while running:
+    while running and not rospy.is_shutdown():
         dir_vel = Twist()
         dir_vel.linear.x = 1
 

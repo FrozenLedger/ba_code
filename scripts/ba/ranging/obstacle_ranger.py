@@ -29,7 +29,7 @@ def main():
     running = True
     rate = rospy.Rate(10)
     seq = 0
-    while running:
+    while running and not rospy.is_shutdown():
         scan_reader = ScanReader(scan.data) # reads distance and angle values from laserscan
         
         #s,c,alpha,min_dist,min_avg,min_med = scan_reader.calcVectorSumNormalized() # calculates the normalized vector of all distance measurements

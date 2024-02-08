@@ -25,7 +25,7 @@ def main():
 
     rate = rospy.Rate(10)
     running = True
-    while running:
+    while running and not rospy.is_shutdown():
         try:
             twist = steer_vel.data
             twist.linear.x += nav_vel.data.linear.x
