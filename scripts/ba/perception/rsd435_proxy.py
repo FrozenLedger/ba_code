@@ -10,50 +10,33 @@ from ba_code.srv import TakeSnapshotRequest,TakeSnapshot
 
 from sensor_msgs.msg import Image
 
-class ImageData:
-    def __init__(self,rgb_img,depth_img,nparray,imgID):
-        self.__rgb_img = rgb_img
-        self.__depth_img = depth_img
-        self.__nparray = nparray
-        self.__imgID = imgID
-
-    @property
-    def rgb(self):
-        return self.__rgb_img
-    
-    @property
-    def depth(self):
-        return self.__depth_img
-    
-    @property
-    def nparray(self):
-        return self.__nparray
-    
-    @property
-    def imgID(self):
-        return self.__imgID
+from ba.perception import DepthImage
 
 class RealSenseD435Proxy:
-    def __init__(self, inpath, outpath:str = "/tmp/rs_d435_images/", width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
-        # create the path where the images will be stored, if it doesn't exist
-        Path(outpath).mkdir(parents=True, exist_ok=True)
-
-        # variables
-        self.__outpath = outpath
-        self.__inpath = inpath
-        #self.__running = False
-
+    def __init__(self, inpath, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
         print("Running rs-proxy. This is a simulated camera.")
-
-        self.__delay_amount = delay
+        self.__inpath = inpath
         
         # Protected
         self._width = width
         self._height = height
+        self._format = format
 
         print("RealSenseD435Proxy running. [INFO] This is not a real camera.")
-        
-    def take_snapshot(self) -> ImageData:
+    
+    ### properties ###
+    @property
+    def WIDTH(self):
+        return self._width
+    @property
+    def HEIGHT(self):
+        return self._height
+    @property
+    def FORMAT(self):
+        return self._format
+    ###################
+
+    def take_snapshot(self) -> DepthImage:
         imgID = 1702375746
 
         rgb_img = cv2.imread(f"{self.__inpath}/Images/snapshot_{imgID}/rgb_img_{imgID}.jpg")
@@ -72,7 +55,7 @@ class RealSenseD435Proxy:
         except  Exception as e:
             print(e)
         
-        img_data = ImageData(rgb_img=rgb_img,depth_img=depth_img,nparray=depth,imgID=imgID)
+        img_data = DepthImage(colorim=rgb_img,depthim=depth_img,depth=depth)
         return img_data
     
 class RealSenseD435ServerProxy:
@@ -86,7 +69,7 @@ class RealSenseD435ServerProxy:
     def __init_services(self,frame_id):
         self.__bridge = CvBridge()
         
-        self.__server = rospy.Service("/take_sapshot",TakeSnapshot,self.take_snapshot)
+        self.__server = rospy.Service("/take_snapshot",TakeSnapshot,self.take_snapshot)
         self.__seq = 0
         self.__frame_id = frame_id
         rospy.loginfo("/take_snapshot service initialized.")
