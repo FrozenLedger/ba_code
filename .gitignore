@@ -3,3 +3,4 @@ sonstige/
 __pycache__
 log/
 ba.egg-info/
+yolov5m.pt

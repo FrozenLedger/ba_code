@@ -53,6 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
     FILES
     Distance.msg
+    Detection.msg
 #   Message1.msg
 #   Message2.msg
 )
@@ -61,7 +62,9 @@ add_message_files(
 add_service_files(
     FILES
     TakeSnapshot.srv
+    TakeSnapshotStamped.srv
     GetDistance.srv
+    Detect.srv
 #   Service2.srv
 )
 
@@ -169,6 +172,7 @@ catkin_install_python(PROGRAMS
     scripts/ba/navigation/wall_follower.py
     scripts/ba/visualization/lidar_visualizer.py
     scripts/ba/perception/rsd435_node.py
+    scripts/ba/detection/detection_node.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

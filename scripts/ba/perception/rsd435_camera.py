@@ -2,8 +2,6 @@ import cv2,time
 import pyrealsense2 as rs
 import numpy as np
 
-from sensor_msgs.msg import RegionOfInterest
-
 def get_distance(area,px,py,size=0):
         if size == 0:
             return area[py,px]
@@ -15,7 +13,7 @@ def get_distance(area,px,py,size=0):
             return np.median(subarea)
 
 class DepthImage:
-    def __init__(self,colorim,depthim,depth):
+    def __init__(self,colorim=np.zeros([]),depthim=np.zeros([]),depth=np.zeros([])):
         self.__colorim = colorim
         self.__depthim = depthim
         self.__depth = depth
@@ -58,16 +56,30 @@ class DepthImage:
 
         return (center_dist,min_dist,max_dist,avg_dist,median_dist)
         
-    def write(self,outpath:str,region = (0,0,0,0)):
+    def write(self,outpath:str,region = (0,0,0,0),imgID=0,subname=""):
         if region == (0,0,0,0):
             colorim = self.__colorim
             depthim = self.__depthim
+            deptharr = self.__depth
         else:
+            h,w = self.__colorim.shape
             x_offset,y_offset,width,height = region
-            colorim = self.__colorim[y_offset:y_offset+height,x_offset:x_offset+width]
-            depthim = self.__depthim[y_offset:y_offset+height,x_offset:x_offset+width]
-        cv2.imwrite(f"{outpath}/color.jpg",colorim)
-        cv2.imwrite(f"{outpath}/depth.jpg",depthim)
+            x_start = max(0,x_offset)
+            x_end = min(w,x_offset+width)
+            y_start = max(0,y_offset)
+            y_end = min(h,y_offset+height)
+            colorim = self.__colorim[y_start:y_end,x_start:x_end]
+            depthim = self.__depthim[y_start:y_end,x_start:x_end]
+            deptharr = self.__depth[y_start:y_end,x_start:x_end]
+        cv2.imwrite(f"{outpath}/color_{imgID}.jpg",colorim)
+        cv2.imwrite(f"{outpath}/depth_{imgID}.jpg",depthim)
+        np.save(f"{outpath}/depth_{imgID}.npy",deptharr)
+
+    def read(self,inpath:str,imgID=0):
+        self.__colorim = cv2.imread(f"{inpath}/color_{imgID}.jpg")
+        self.__depthim = cv2.imread(f"{inpath}/depth_{imgID}.jpg")
+        self.__depth = np.load(f"{inpath}/depth_{imgID}.npy")
+        return self
 
 class RealSenseD435:
     def __init__(self, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):

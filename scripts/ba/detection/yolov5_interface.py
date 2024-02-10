@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import torch, yolov5
 
+from pathlib import Path
+
 class DetectionAdapter:
     def __init__(self,detection):
         self.__detection = detection
@@ -41,12 +43,45 @@ class DetectionAdapter:
     #    predpath = pathlib.get_pred_path(imgID)
 
 def Yolov5Model(weights="yolov5m"):
-    model = torch.hub.load("ultralytics/yolov5",weights)
+    fname = f"{weights}.pt"
+    try:
+        model = load(fname)
+    except FileNotFoundError as e:
+        print(e)
+        print("Reload model from internet...")
+        model = torch.hub.load("ultralytics/yolov5",weights)
+        print("Done.")
+        print("Save model...")
+        save(model,fname)
+        print("Done.")
     return ObjectDetectionModel(model)
 
 def Trashnet():
-    model = yolov5.load("turhancan97/yolov5-detect-trash-classification")
+    # based on: https://stackoverflow.com/questions/67302634/how-do-i-load-a-local-model-with-torch-hub-load
+    fname = "trashnet.pt"
+    try:
+        model = load(fname)
+    except FileNotFoundError as e:
+        print(e)
+        print("Reload model from internet...")
+        model = yolov5.load("turhancan97/yolov5-detect-trash-classification")
+        print("Done.")
+        print("Save model...")
+        save(model,fname)
+        print("Done.")
     return ObjectDetectionModel(model)
+
+def __path():
+    return f"{Path.home()}/CNN"
+
+def save(model,fname):
+    path = __path()
+    Path(path).mkdir(parents=True,exist_ok=True)
+    torch.save(model,f"{path}/{fname}")
+
+def load(fname):
+    path = __path()
+    return torch.load(f"{path}/{fname}")    
 
 class ObjectDetectionModel:
     def __init__(self,model):
@@ -77,8 +112,8 @@ if __name__ == "__main__":
     obj_model = Yolov5Model() #yolov5.load("turhancan97/yolov5-detect-trash-classification")
     trash_model = Trashnet()
 
-    imgID = 1702375746
-    impath = f"/home/workspace1/rsd435_images/Images/snapshot_{imgID}/rgb_img_{imgID}.jpg"
+    imgID = 1707574283630295991
+    impath = f"/tmp/rsd435_images/color_{imgID}.jpg"
     cls_id: int = 39 # 39 := bottle
     print(obj_model.detect(impath,clsIDs=[cls_id]))
     print(trash_model.detect(impath,clsIDs=[cls_id]))
