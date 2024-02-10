@@ -1,0 +1,5 @@
+sensor_msgs/RegionOfInterest roi
+float32 min_dist # ignores values below
+float32 max_dist # ignored values above, value 0 -> no maximum distance filter
+---
+Distance distance

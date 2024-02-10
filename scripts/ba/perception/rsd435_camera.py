@@ -2,7 +2,7 @@ import cv2,time
 import pyrealsense2 as rs
 import numpy as np
 
-from pathlib import Path
+from sensor_msgs.msg import RegionOfInterest
 
 class DepthImage:
     def __init__(self,colorim,depthim,depth):
@@ -26,6 +26,48 @@ class DepthImage:
         dist = self.__depth_data[py,px]
         print(f"Distance data at ({px,py} = {dist} mm")
         return dist #self.__aligned_depth_frames.get_distance(x,y)
+    
+    def image_to_depth(self,center_size=0):
+        return self.__area_to_depth(self.__depth,center_size=center_size)
+    
+    def region_to_depth(self,x_offset,y_offset,width,height,center_size=0):
+        h,w = self.__depth.shape
+        area = self.__depth[max(0,y_offset):min(h,y_offset+height),max(0,x_offset):min(w,x_offset+width)]
+        return self.__area_to_depth(area,center_size=center_size)
+        
+    def __area_to_depth(self,area,center_size=0):
+        h,w = area.shape
+        px = w//2
+        py = h//2
+
+        center_dist = self.get_distance(px=px,py=py,size=center_size)
+        min_dist = np.min(area)
+        max_dist = np.max(area)
+        avg_dist = np.average(area)
+        median_dist = np.median(area)
+
+        return (center_dist,min_dist,max_dist,avg_dist,median_dist)
+    
+    def get_distance(self,px,py,size=0):
+        if size == 0:
+            return self.__depth[py,px]
+        else:
+            h,w = self.__depth.shape
+            area = self.__depth[max(0,py-size):min(h,py+size+1),max(0,px-size):min(w,px+size+1)]
+            ah,aw = area.shape
+            print(aw,ah,px,py,size)
+            return np.median(area)
+        
+    def write(self,outpath:str,region = (0,0,0,0)):
+        if region == (0,0,0,0):
+            colorim = self.__colorim
+            depthim = self.__depthim
+        else:
+            x_offset,y_offset,width,height = region
+            colorim = self.__colorim[y_offset:y_offset+height,x_offset:x_offset+width]
+            depthim = self.__depthim[y_offset:y_offset+height,x_offset:x_offset+width]
+        cv2.imwrite(f"{outpath}/color.jpg",colorim)
+        cv2.imwrite(f"{outpath}/depth.jpg",depthim)
 
 class RealSenseD435:
     def __init__(self, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
@@ -119,19 +161,23 @@ The sharpened image will be saved in the /sharpened subdirectory."""
         depth_img = cv2.applyColorMap(cv2.convertScaleAbs(depth_data, alpha=0.03),cv2.COLORMAP_JET)
 
         return DepthImage(colorim=color_img,depthim=depth_img,depth=depth_data)
-
+    
 def cv_view():
     # based on: https://www.youtube.com/watch?v=mFLZkdH1yLE&t=305s
 
     cam = RealSenseD435()
 
-    pnt = (cam.WIDTH//2,cam.HEIGHT//2)
+    (px,py) = (cam.WIDTH//2,cam.HEIGHT//2)
     while True:
         data = cam.take_snapshot()
-        cv2.circle(data.colorim,pnt,4,(0,0,255)) #bgr
+        cv2.circle(data.colorim,(px,py),4,(0,0,255)) #bgr
 
-        dist = data.depth[pnt[1],pnt[0]]
+        dist = data.depth[py,px]
+        
+        region = (px-50,py-50,100,100)
+        result = data.region_to_depth(*region)
         print(dist)
+        print(result)
 
         cv2.imshow("depth",data.depthim)
         cv2.imshow("color",data.colorim)

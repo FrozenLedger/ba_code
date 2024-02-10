@@ -24,10 +24,15 @@ def calcVelocity(scan,obstacle=False):
     if len(dist_arr) <= 0:
         return (0,0,0)
     
-    min_dist = np.min(dist_arr)
-    if min_dist == math.inf:
-        min_dist = scan.data.range_max
+    #min_dist = np.min(dist_arr)
+    #if min_dist == math.inf:
+    #    min_dist = scan.data.range_max
     
+    dist_arr[dist_arr > scan.data.range_max] = scan.data.range_max
+    dist_arr[dist_arr < scan.data.range_min] = scan.data.range_max # <---
+
+    min_dist = np.min(dist_arr)
+    #print(min_dist)
     if obstacle:
         dist_arr[dist_arr > min_dist + 0.2] = 0
     else:
@@ -38,10 +43,10 @@ def calcVelocity(scan,obstacle=False):
     N = len(dist_arr)
     angles = np.array([start_angle + i*incr for i in range(N)])
 
-    (X,Y) = calcVectors(angles)*dist_arr
+    (Y,X) = calcVectors(angles)*dist_arr
     x = np.average(X) #np.sum(X)/len(X)
     y = np.average(Y) #np.sum(Y)/len(Y)
-    
+
     return x,y,min_dist
 
 def main():
@@ -54,7 +59,7 @@ def main():
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
     
 
-    max_lin_spd = 0.35
+    max_lin_spd = 0.1
     min_gap = 2
 
     running = True
@@ -65,7 +70,7 @@ def main():
 
         ox,oy,min_dist = calcVelocity(scan,obstacle=True)
 
-        alpha = math.atan2(ox,oy) # obstacle
+        alpha = math.atan2(oy,ox) # obstacle
         if -math.pi <= alpha < 0:
             fdir = radians(90)
         else:

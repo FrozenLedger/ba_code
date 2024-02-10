@@ -11,6 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   message_generation
+  std_msgs
+  geometry_msgs
+  sensor_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -47,16 +50,18 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
+add_message_files(
+    FILES
+    Distance.msg
 #   Message1.msg
 #   Message2.msg
-# )
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
     FILES
-    TakeSnapshotProxy.srv
+    TakeSnapshot.srv
+    GetDistance.srv
 #   Service2.srv
 )
 
@@ -71,6 +76,7 @@ add_service_files(
 generate_messages(
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
+   sensor_msgs
 )
 
 ################################################
@@ -162,6 +168,7 @@ include_directories(
 catkin_install_python(PROGRAMS
     scripts/ba/navigation/wall_follower.py
     scripts/ba/visualization/lidar_visualizer.py
+    scripts/ba/perception/rsd435_node.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

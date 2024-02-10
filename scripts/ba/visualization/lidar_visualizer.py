@@ -49,18 +49,21 @@ def main():
     seq = 0
     while not rospy.is_shutdown():
         data = scan.data
-        info = f"min: {data.range_min}\tmax: {data.range_max}\tN: {len(data.ranges)}\tincr: {data.angle_increment}\n"
-        if len(data.ranges) > 0:
+        N = len(data.ranges)
+        info = f"min: {data.range_min}\tmax: {data.range_max}\tN: {N}\tincr: {data.angle_increment}\n"
+        if N > 0:
             dist_arr = np.array(data.ranges)
             dist_arr[dist_arr > 12] = 12#data.range_max
+            dist_arr[dist_arr == np.nan] = 12
+            #dist_arr[dist_arr == np.inf] = 12
             
             start = data.angle_min
             incr = data.angle_increment
-            angles = np.array([start+i*incr for i in range(len(data.ranges))])
+            angles = np.array([start+i*incr for i in range(N)])
 
             poly_stamped = build_polygon(dist_arr,angles)
             pub.publish(poly_stamped)
-        rospy.loginfo(info)
+        print(info)
         try:
             rate.sleep()
         except rospy.ROSInterruptException:
