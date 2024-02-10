@@ -4,6 +4,16 @@ import numpy as np
 
 from sensor_msgs.msg import RegionOfInterest
 
+def get_distance(area,px,py,size=0):
+        if size == 0:
+            return area[py,px]
+        else:
+            h,w = area.shape
+            subarea = area[max(0,py-size):min(h,py+size+1),max(0,px-size):min(w,px+size+1)]
+            ah,aw = area.shape
+            print(aw,ah,px,py,size)
+            return np.median(subarea)
+
 class DepthImage:
     def __init__(self,colorim,depthim,depth):
         self.__colorim = colorim
@@ -40,23 +50,13 @@ class DepthImage:
         px = w//2
         py = h//2
 
-        center_dist = self.get_distance(px=px,py=py,size=center_size)
+        center_dist = get_distance(area,px=px,py=py,size=center_size)
         min_dist = np.min(area)
         max_dist = np.max(area)
         avg_dist = np.average(area)
         median_dist = np.median(area)
 
         return (center_dist,min_dist,max_dist,avg_dist,median_dist)
-    
-    def get_distance(self,px,py,size=0):
-        if size == 0:
-            return self.__depth[py,px]
-        else:
-            h,w = self.__depth.shape
-            area = self.__depth[max(0,py-size):min(h,py+size+1),max(0,px-size):min(w,px+size+1)]
-            ah,aw = area.shape
-            print(aw,ah,px,py,size)
-            return np.median(area)
         
     def write(self,outpath:str,region = (0,0,0,0)):
         if region == (0,0,0,0):
@@ -162,15 +162,18 @@ The sharpened image will be saved in the /sharpened subdirectory."""
 
         return DepthImage(colorim=color_img,depthim=depth_img,depth=depth_data)
     
-def cv_view():
+def cv_view(frame_rate=1,size=4):
     # based on: https://www.youtube.com/watch?v=mFLZkdH1yLE&t=305s
 
     cam = RealSenseD435()
 
     (px,py) = (cam.WIDTH//2,cam.HEIGHT//2)
+
+    delay = int((1/frame_rate)*1000)
     while True:
         data = cam.take_snapshot()
-        cv2.circle(data.colorim,(px,py),4,(0,0,255)) #bgr
+        
+        cv2.circle(data.colorim,(px,py),max(1,size),(0,0,255)) #bgr
 
         dist = data.depth[py,px]
         
@@ -182,9 +185,9 @@ def cv_view():
         cv2.imshow("depth",data.depthim)
         cv2.imshow("color",data.colorim)
 
-        key = cv2.waitKey(1)
+        key = cv2.waitKey(delay)
         if key == 27:
             break
 
 if __name__ == "__main__":
-    cv_view()
+    cv_view(frame_rate=5,size=4)
