@@ -9,7 +9,7 @@ def get_distance(area,px,py,size=0):
             h,w = area.shape
             subarea = area[max(0,py-size):min(h,py+size+1),max(0,px-size):min(w,px+size+1)]
             ah,aw = area.shape
-            print(aw,ah,px,py,size)
+            #print(aw,ah,px,py,size)
             return np.median(subarea)
 
 class DepthImage:
@@ -62,7 +62,7 @@ class DepthImage:
             depthim = self.__depthim
             deptharr = self.__depth
         else:
-            h,w = self.__colorim.shape
+            h,w = self.__depth.shape
             x_offset,y_offset,width,height = region
             x_start = max(0,x_offset)
             x_end = min(w,x_offset+width)
@@ -73,13 +73,19 @@ class DepthImage:
             deptharr = self.__depth[y_start:y_end,x_start:x_end]
         cv2.imwrite(f"{outpath}/color_{imgID}.jpg",colorim)
         cv2.imwrite(f"{outpath}/depth_{imgID}.jpg",depthim)
-        np.save(f"{outpath}/depth_{imgID}.npy",deptharr)
+        with open(f"{outpath}/depth_{imgID}.npy","wb") as npyf:
+            np.save(npyf,deptharr)
 
     def read(self,inpath:str,imgID=0):
         self.__colorim = cv2.imread(f"{inpath}/color_{imgID}.jpg")
         self.__depthim = cv2.imread(f"{inpath}/depth_{imgID}.jpg")
-        self.__depth = np.load(f"{inpath}/depth_{imgID}.npy")
         return self
+    
+    @classmethod
+    def read_depth(cls,inpath:str,imgID):
+        with open(f"{inpath}/depth_{imgID}.npy","rb") as npyf:
+            depth = np.load(npyf)
+        return DepthImage(depth=depth)
 
 class RealSenseD435:
     def __init__(self, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
@@ -145,6 +151,7 @@ class RealSenseD435:
 
     def take_snapshot(self,sharpen:bool = False) -> DepthImage:
         # based on: https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/align-depth2color.py
+        # also based on: https://github.com/InterlRealSense/librealsense/issues/2481
         """Takes a snapshot with the provided camera and saves the results in the [SolarSwarmAssets] folder.
 If sharpen is True, then the image will be sharpened using the cv2 library.
 The sharpened image will be saved in the /sharpened subdirectory."""
@@ -162,15 +169,29 @@ The sharpened image will be saved in the /sharpened subdirectory."""
         aligned_frames = self.__alignment.process(frames)
         # Get aligned frames
         aligned_depth_frame = aligned_frames.get_depth_frame()
+
         color_frame = aligned_frames.get_color_frame()
+
+        #print(aligned_depth_frame.get_profile())
         
         # Validate that both frames are valid
         if not aligned_depth_frame or not color_frame:
             return
-            
+
         depth_data = np.asanyarray(aligned_depth_frame.get_data())
         color_img = np.asanyarray(color_frame.get_data())
         depth_img = cv2.applyColorMap(cv2.convertScaleAbs(depth_data, alpha=0.03),cv2.COLORMAP_JET)
+
+        intrinsics = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
+        h,w = depth_data.shape
+        px = w//2
+        py = h//2
+        dist = aligned_depth_frame.get_distance(px,py)
+        pnt = rs.rs2_deproject_pixel_to_point(intrinsics,[px,py], dist)
+
+        print(dist,depth_data[py,px])
+        print(f"Pnt: {pnt}")
+        print(rs.rs2_fov(intrinsics))
 
         return DepthImage(colorim=color_img,depthim=depth_img,depth=depth_data)
     

@@ -88,10 +88,11 @@ class RealSenseD435Server:
         imgID = int(str(rospy.Time.now()))
         try:
             data.write(outpath=self.__outpath,imgID=imgID)
-            print(f"[Info] Images saved with imgID:{imgID}")
+            print(f"[INFO] Images saved with imgID:{imgID}")
         except Exception as e:
             print(e)
         response = TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
+        #print(f"[Header] {response.header}")
         return response
     
     def __get_distance(self, request):
