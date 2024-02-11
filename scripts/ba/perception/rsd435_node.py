@@ -1,4 +1,4 @@
-import rospy
+import rospy, cv2
 import pyrealsense2 as rs
 
 from cv_bridge import CvBridge
@@ -13,9 +13,10 @@ from ba_code.msg import Distance
 from ba_code.srv import TakeSnapshotStamped,TakeSnapshotStampedResponse,GetDistance,GetDistanceResponse
 
 from pathlib import Path
+import numpy as np
 
 class RealSenseD435Server:
-    def __init__(self, frame_id="camera_link",outpath="/tmp/rsd435_images/", width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
+    def __init__(self, frame_id="camera_link",outpath="/tmp/rsd435_images/", width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0,max_buffer_size=10):
         self.__camera = RealSenseD435(width=width,height=height,format=format,framerate=framerate,delay=delay)
 
         self.__frame_id = frame_id
@@ -26,6 +27,10 @@ class RealSenseD435Server:
         self.__framerate = rospy.Rate(framerate)
         self.__idle = rospy.Rate(1)
         self.__cvbride:CvBridge = CvBridge()
+
+        self.__buffer = {}
+        self.__max_buffer_size = max_buffer_size
+        self.__buffer_count = 0
 
         self.__init_services()
         self.__init_publisher()
@@ -83,14 +88,18 @@ class RealSenseD435Server:
         return response
 
     def __take_snapshot(self,request):
-        data = self.__camera.take_snapshot()
+        frame_buffer = self.__camera.take_snapshot()
+        #data = self.__camera.take_snapshot()
 
         imgID = int(str(rospy.Time.now()))
+        self.__add_frame_buffer(frame_buffer,imgID=imgID)
+
         try:
-            data.write(outpath=self.__outpath,imgID=imgID)
-            print(f"[INFO] Images saved with imgID:{imgID}")
+            cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
+            print(f"[INFO] RGB image saved with imgID:{imgID}")
         except Exception as e:
             print(e)
+
         response = TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
         #print(f"[Header] {response.header}")
         return response
@@ -109,6 +118,33 @@ class RealSenseD435Server:
         response = GetDistanceResponse()
         response.distance = Distance(*data)
         return response
+    
+    def __add_frame_buffer(self,frame_buffer,imgID):
+        if len(self.__buffer) < self.__max_buffer_size:
+            self.__buffer[imgID] = frame_buffer
+            self.__buffer_count += 1
+            return True
+        else:
+            print(f"[Warning] Buffer is full. Please clear some frames from the buffer: BufferSize[{len(self.__buffer)}/{self.__max_buffer_size}")
+        return False
+    
+    def __remove_frame_buffer(self,imgID):
+        if imgID in self.__buffer:
+            del self.__buffer[imgID]
+            self.__buffer_count -= 1
+            return True
+        print(f"[Warning] Frame buffer with imgID:{imgID} not in buffer.")
+        return False
+
+def get_distance(area,px,py,size=0):
+        if size == 0:
+            return area[py,px]
+        else:
+            h,w = area.shape
+            subarea = area[max(0,py-size):min(h,py+size+1),max(0,px-size):min(w,px+size+1)]
+            ah,aw = area.shape
+            #print(aw,ah,px,py,size)
+            return np.median(subarea)
 
 def main():
     rospy.init_node("rs_d435")
@@ -117,3 +153,78 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+class DepthImage:
+    def __init__(self,colorim=np.zeros([]),depthim=np.zeros([]),depth=np.zeros([])):
+        self.__colorim = colorim
+        self.__depthim = depthim
+        self.__depth = depth
+
+    @property
+    def depthim(self):
+        return self.__depthim
+    @property
+    def colorim(self):
+        return self.__colorim
+    @property
+    def depth(self):
+        return self.__depth
+
+    def pixel_to_depth(self, px,py) -> int:
+        """Returns the distance value of the pixelcoordinate (<x>,<y>) read from the depth data."""
+        #return self.__alignment.get_depth_frame().get_distance(x,y)
+        dist = self.__depth_data[py,px]
+        print(f"Distance data at ({px,py} = {dist} mm")
+        return dist #self.__aligned_depth_frames.get_distance(x,y)
+    
+    def image_to_depth(self,center_size=0):
+        return self.__area_to_depth(self.__depth,center_size=center_size)
+    
+    def region_to_depth(self,x_offset,y_offset,width,height,center_size=0):
+        h,w = self.__depth.shape
+        area = self.__depth[max(0,y_offset):min(h,y_offset+height),max(0,x_offset):min(w,x_offset+width)]
+        return self.__area_to_depth(area,center_size=center_size)
+        
+    def __area_to_depth(self,area,center_size=0):
+        h,w = area.shape
+        px = w//2
+        py = h//2
+
+        center_dist = get_distance(area,px=px,py=py,size=center_size)
+        min_dist = np.min(area)
+        max_dist = np.max(area)
+        avg_dist = np.average(area)
+        median_dist = np.median(area)
+
+        return (center_dist,min_dist,max_dist,avg_dist,median_dist)
+        
+    def write(self,outpath:str,region = (0,0,0,0),imgID=0,subname=""):
+        if region == (0,0,0,0):
+            colorim = self.__colorim
+            depthim = self.__depthim
+            deptharr = self.__depth
+        else:
+            h,w = self.__depth.shape
+            x_offset,y_offset,width,height = region
+            x_start = max(0,x_offset)
+            x_end = min(w,x_offset+width)
+            y_start = max(0,y_offset)
+            y_end = min(h,y_offset+height)
+            colorim = self.__colorim[y_start:y_end,x_start:x_end]
+            depthim = self.__depthim[y_start:y_end,x_start:x_end]
+            deptharr = self.__depth[y_start:y_end,x_start:x_end]
+        cv2.imwrite(f"{outpath}/color_{imgID}.jpg",colorim)
+        cv2.imwrite(f"{outpath}/depth_{imgID}.jpg",depthim)
+        with open(f"{outpath}/depth_{imgID}.npy","wb") as npyf:
+            np.save(npyf,deptharr)
+
+    def read(self,inpath:str,imgID=0):
+        self.__colorim = cv2.imread(f"{inpath}/color_{imgID}.jpg")
+        self.__depthim = cv2.imread(f"{inpath}/depth_{imgID}.jpg")
+        return self
+    
+    @classmethod
+    def read_depth(cls,inpath:str,imgID):
+        with open(f"{inpath}/depth_{imgID}.npy","rb") as npyf:
+            depth = np.load(npyf)
+        return DepthImage(depth=depth)

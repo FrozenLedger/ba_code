@@ -2,90 +2,48 @@ import cv2,time
 import pyrealsense2 as rs
 import numpy as np
 
-def get_distance(area,px,py,size=0):
-        if size == 0:
-            return area[py,px]
-        else:
-            h,w = area.shape
-            subarea = area[max(0,py-size):min(h,py+size+1),max(0,px-size):min(w,px+size+1)]
-            ah,aw = area.shape
-            #print(aw,ah,px,py,size)
-            return np.median(subarea)
+class FrameBuffer:
+    def __init__(self,aligned_frames):
+        self.__aligned_frames = aligned_frames
+        self.__imgs = {}
 
-class DepthImage:
-    def __init__(self,colorim=np.zeros([]),depthim=np.zeros([]),depth=np.zeros([])):
-        self.__colorim = colorim
-        self.__depthim = depthim
-        self.__depth = depth
-
-    @property
-    def depthim(self):
-        return self.__depthim
     @property
     def colorim(self):
-        return self.__colorim
+        return self.__get_img("colorim",self.aligned_color_frame)
     @property
-    def depth(self):
-        return self.__depth
+    def depthim(self):
+        return cv2.applyColorMap(cv2.convertScaleAbs(self.depth_data, alpha=0.03),cv2.COLORMAP_JET)
+    @property
+    def depth_data(self):
+        return self.__get_img("depthim",self.aligned_depth_frame)
 
-    def pixel_to_depth(self, px,py) -> int:
-        """Returns the distance value of the pixelcoordinate (<x>,<y>) read from the depth data."""
-        #return self.__alignment.get_depth_frame().get_distance(x,y)
-        dist = self.__depth_data[py,px]
-        print(f"Distance data at ({px,py} = {dist} mm")
-        return dist #self.__aligned_depth_frames.get_distance(x,y)
+    def __get_img(self,key,frame):
+        if key not in self.__imgs:
+            self.__imgs[key] = np.asanyarray(frame.get_data())
+        return self.__imgs[key]
+
+    @property
+    def aligned_depth_frame(self):
+        return self.__aligned_frames.get_depth_frame()
     
-    def image_to_depth(self,center_size=0):
-        return self.__area_to_depth(self.__depth,center_size=center_size)
+    @property
+    def aligned_color_frame(self):
+        return self.__aligned_frames.get_color_frame()
     
-    def region_to_depth(self,x_offset,y_offset,width,height,center_size=0):
-        h,w = self.__depth.shape
-        area = self.__depth[max(0,y_offset):min(h,y_offset+height),max(0,x_offset):min(w,x_offset+width)]
-        return self.__area_to_depth(area,center_size=center_size)
+    @property
+    def intrinsics(self):
+        return self.aligned_depth_frame.profile.as_video_stream_profile().intrinsics
+    
+    @property
+    def FOV(self):
+        return rs.rs2_fov(self.intrinsics)
+    
+    def get_distance(self,px,py):
+        return self.aligned_depth_frame.get_distance(px,py)
         
-    def __area_to_depth(self,area,center_size=0):
-        h,w = area.shape
-        px = w//2
-        py = h//2
-
-        center_dist = get_distance(area,px=px,py=py,size=center_size)
-        min_dist = np.min(area)
-        max_dist = np.max(area)
-        avg_dist = np.average(area)
-        median_dist = np.median(area)
-
-        return (center_dist,min_dist,max_dist,avg_dist,median_dist)
+    def pixel_to_point3D(self,px,py):
+        return rs.rs2_deproject_pixel_to_point(self.intrinsics,[px,py], self.get_distance(px,py))
         
-    def write(self,outpath:str,region = (0,0,0,0),imgID=0,subname=""):
-        if region == (0,0,0,0):
-            colorim = self.__colorim
-            depthim = self.__depthim
-            deptharr = self.__depth
-        else:
-            h,w = self.__depth.shape
-            x_offset,y_offset,width,height = region
-            x_start = max(0,x_offset)
-            x_end = min(w,x_offset+width)
-            y_start = max(0,y_offset)
-            y_end = min(h,y_offset+height)
-            colorim = self.__colorim[y_start:y_end,x_start:x_end]
-            depthim = self.__depthim[y_start:y_end,x_start:x_end]
-            deptharr = self.__depth[y_start:y_end,x_start:x_end]
-        cv2.imwrite(f"{outpath}/color_{imgID}.jpg",colorim)
-        cv2.imwrite(f"{outpath}/depth_{imgID}.jpg",depthim)
-        with open(f"{outpath}/depth_{imgID}.npy","wb") as npyf:
-            np.save(npyf,deptharr)
-
-    def read(self,inpath:str,imgID=0):
-        self.__colorim = cv2.imread(f"{inpath}/color_{imgID}.jpg")
-        self.__depthim = cv2.imread(f"{inpath}/depth_{imgID}.jpg")
-        return self
-    
-    @classmethod
-    def read_depth(cls,inpath:str,imgID):
-        with open(f"{inpath}/depth_{imgID}.npy","rb") as npyf:
-            depth = np.load(npyf)
-        return DepthImage(depth=depth)
 
 class RealSenseD435:
     def __init__(self, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
@@ -117,12 +75,12 @@ class RealSenseD435:
             print(f"WARNING: Found {self.__device}, which is not supported for use with the class RealSenseD435Facet. Please connect a RealSense D400 series device!")
         else:
             try:
-                self.__start_pipeline()
+                self.start_pipeline()
                 self.__running = True
             except:
                 print("Unkown Error: Starting pipeline failed.")
 
-    def __start_pipeline(self) -> None:
+    def start_pipeline(self) -> None:
         self.__pipeline.start(self.__config)
         self.__starttime: float = time.time()
         #self.__delayed: bool = False
@@ -140,16 +98,16 @@ class RealSenseD435:
         return self._format
     ###################
 
-    def __stop_pipeline(self) -> None:
+    def stop_pipeline(self) -> None:
         self.__pipeline.stop()
         print("INFO: Pipeline stopped.")
 
     # Dunder
     def __del__(self) -> None:
         if self.__running:
-            self.__stop_pipeline()
+            self.stop_pipeline()
 
-    def take_snapshot(self,sharpen:bool = False) -> DepthImage:
+    def take_snapshot(self) -> FrameBuffer:
         # based on: https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/align-depth2color.py
         # also based on: https://github.com/InterlRealSense/librealsense/issues/2481
         """Takes a snapshot with the provided camera and saves the results in the [SolarSwarmAssets] folder.
@@ -168,32 +126,30 @@ The sharpened image will be saved in the /sharpened subdirectory."""
         # Align frames
         aligned_frames = self.__alignment.process(frames)
         # Get aligned frames
-        aligned_depth_frame = aligned_frames.get_depth_frame()
-
-        color_frame = aligned_frames.get_color_frame()
+        #aligned_depth_frame = aligned_frames.get_depth_frame()
+        #color_frame = aligned_frames.get_color_frame()
+        frame_buffer = FrameBuffer(aligned_frames)
 
         #print(aligned_depth_frame.get_profile())
         
         # Validate that both frames are valid
-        if not aligned_depth_frame or not color_frame:
+        if not frame_buffer.aligned_depth_frame or not frame_buffer.aligned_color_frame:
             return
 
-        depth_data = np.asanyarray(aligned_depth_frame.get_data())
-        color_img = np.asanyarray(color_frame.get_data())
-        depth_img = cv2.applyColorMap(cv2.convertScaleAbs(depth_data, alpha=0.03),cv2.COLORMAP_JET)
+        # depth_data = frame_buffer.depth_data #np.asanyarray(frame_buffer.aligned_depth_frame.get_data())
+        # color_img = frame_buffer.colorim #color_img = np.asanyarray(frame_buffer.aligned_color_frame.get_data())
+        # depth_img = frame_buffer.depthim #cv2.applyColorMap(cv2.convertScaleAbs(depth_data, alpha=0.03),cv2.COLORMAP_JET)
 
-        intrinsics = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
-        h,w = depth_data.shape
-        px = w//2
-        py = h//2
-        dist = aligned_depth_frame.get_distance(px,py)
-        pnt = rs.rs2_deproject_pixel_to_point(intrinsics,[px,py], dist)
+        # h,w = depth_data.shape
+        # px = w//2
+        # py = h//2
+        # dist = frame_buffer.aligned_depth_frame.get_distance(px,py)
+        # pnt = frame_buffer.pixel_to_point3D(px,py)
+        #print(dist,depth_data[py,px])
+        #print(f"Pnt: {pnt}")
+        #print(frame_buffer.FOV)
 
-        print(dist,depth_data[py,px])
-        print(f"Pnt: {pnt}")
-        print(rs.rs2_fov(intrinsics))
-
-        return DepthImage(colorim=color_img,depthim=depth_img,depth=depth_data)
+        return frame_buffer #DepthImage(colorim=color_img,depthim=depth_img,depth=depth_data)
     
 def cv_view(frame_rate=1,size=4):
     # based on: https://www.youtube.com/watch?v=mFLZkdH1yLE&t=305s
@@ -222,5 +178,41 @@ def cv_view(frame_rate=1,size=4):
         if key == 27:
             break
 
+def buffer_test():
+    import time
+    cam = RealSenseD435()
+
+    width = cam.WIDTH
+    height = cam.HEIGHT
+
+    frames = cam.take_snapshot()
+    time.sleep(1)
+    cam.take_snapshot()
+    print("1")
+    time.sleep(1)
+    cam.take_snapshot()
+    print("2")
+    time.sleep(1)
+    cam.stop_pipeline()
+    time.sleep(1)
+    cam.start_pipeline()
+    time.sleep(1)
+    fb2 = cam.take_snapshot()
+    print("3")
+    del cam
+
+    for i in range(5):
+        time.sleep(1)
+        print(f"Delay: {i}")
+
+    px = width//2
+    py = height//2
+    pnt = frames.pixel_to_point3D(px,py)
+    print(pnt)
+
+    cv2.imshow("FB2",fb2.colorim)
+    cv2.waitKey(0)
+
 if __name__ == "__main__":
-    cv_view(frame_rate=5,size=4)
+    #cv_view(frame_rate=5,size=4)
+    buffer_test()
