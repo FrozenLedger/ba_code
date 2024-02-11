@@ -2,13 +2,13 @@ import rospy,cv2
 import numpy as np
 
 from ba.detection.yolov5_interface import Yolov5Model,Trashnet,DetectionAdapter
-from ba.perception.rsd435_camera import DepthImage
+from ba.perception.rsd435_node import DepthImage
 
-from ba_code.msg import Distance
 from ba_code.srv import Detect,DetectResponse
-from ba_code.srv import TakeSnapshotStamped
+from ba_code.srv import TakeSnapshotStamped, GetMetrics, ClearFrame
 
 from std_msgs.msg import Header
+from sensor_msgs.msg import RegionOfInterest
 
 class DetectionServer:
     def __init__(self,outpath:str = "/tmp/detection", inpath:str = "/tmp/rsd435_images"):
@@ -34,13 +34,13 @@ class DetectionServer:
 
     def __detect(self,cnn,imgID=0):
         if imgID == 0:
-            request = self.__snapshot_server()
+            request = self.__snapshot_server(add_buffer=True)
             imgID = request.imgID
             result = DetectResponse(header=request.header)
         else:
             result = DetectResponse()
         
-        depth = DepthImage.read_depth(inpath=self.__inpath,imgID=imgID)
+        #depth = DepthImage.read_depth(inpath=self.__inpath,imgID=imgID)
         
         impath = f"{self.__inpath}/color_{imgID}.jpg"
         data = DetectionAdapter(cnn.detect(impath))
@@ -55,18 +55,25 @@ class DetectionServer:
         result.detection.clsID = df["class"]
         result.detection.confidence = df["confidence"]
 
-        distances = []
+        get_metrics = rospy.ServiceProxy("/rs_d435/get_distance_metrics",GetMetrics)
+        distance_metrics = []
         det = result.detection
         for idx,_ in enumerate(det.clsID):
-            xmin = det.xmin[idx]
-            width = det.xmax[idx]-xmin
-            ymin = det.ymin[idx]
-            height = det.ymax[idx]-ymin
-            region = (xmin,ymin,width,height)
-            xmin = det.xmin
-            d = Distance(*depth.region_to_depth(*region,3))
-            distances.append(d)# print("depth", d)
-        result.detection.distance = distances
+            w = det.xmax[idx] - det.xmin[idx]
+            h = det.ymax[idx] - det.ymin[idx]
+            roi = RegionOfInterest(x_offset=det.xmin[idx],
+                                   y_offset=det.ymin[idx],
+                                   width=w,
+                                   height=h,
+                                   do_rectify=True)
+            metrics = get_metrics(imgID=imgID,roi=roi).metrics
+            #detection = DetectionStamped(*metrics)
+            distance_metrics.append(metrics) # print("depth", d)
+        result.detection.metrics = distance_metrics
+
+        clear_buffer = rospy.ServiceProxy("/rs_d435/clear_frame",ClearFrame)
+        clear_buffer(imgID=imgID)
+
         return result
         
 def main():

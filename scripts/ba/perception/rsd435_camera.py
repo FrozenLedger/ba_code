@@ -2,6 +2,10 @@ import cv2,time
 import pyrealsense2 as rs
 import numpy as np
 
+from sensor_msgs.msg import RegionOfInterest
+
+from ba_code.msg import Metrics
+
 class FrameBuffer:
     def __init__(self,aligned_frames):
         self.__aligned_frames = aligned_frames
@@ -42,8 +46,32 @@ class FrameBuffer:
         return self.aligned_depth_frame.get_distance(px,py)
         
     def pixel_to_point3D(self,px,py):
-        return rs.rs2_deproject_pixel_to_point(self.intrinsics,[px,py], self.get_distance(px,py))
+        dist = self.get_distance(px,py)
+        return self.pixel_with_distance_to_point3D(px,py,dist)
+
+    def deproject_pixel_to_point3D(self,px,py,dist):
+        return rs.rs2_deproject_pixel_to_point(self.intrinsics,[px,py], dist)
+
+    def get_distance_metrics(self,roi:RegionOfInterest):
+        if roi.do_rectify:
+            area = self.depth_data[roi.y_offset:roi.y_offset+roi.height,roi.x_offset:roi.x_offset+roi.width]
+        else:
+            area = self.depth_data
+        h = area.shape[0]
+        w = area.shape[1]
+
+        px = w//2
+        py = h//2
+
+        c = 2 #center_size
+        #center = area[py,px]/1000 #np.nanmedian(area[py-c:py+c+1,px-c:px+c+1])/1000
+        center = np.nanmedian(area[py-c:py+c+1,px-c:px+c+1])/1000
+        median = np.nanmedian(area)/1000
+        avg = np.nanmean(area)/1000
+        std = np.nanstd(area)/1000
+        #var = np.nanvar(area)/1000
         
+        return Metrics(center=center,median=median,avg=avg,std=std) # returns values in [m]
 
 class RealSenseD435:
     def __init__(self, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):

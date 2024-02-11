@@ -54,6 +54,7 @@ add_message_files(
     FILES
     Distance.msg
     Detection.msg
+    Metrics.msg
 #   Message1.msg
 #   Message2.msg
 )
@@ -65,6 +66,9 @@ add_service_files(
     TakeSnapshotStamped.srv
     GetDistance.srv
     Detect.srv
+    ClearFrame.srv
+    PixelToPoint3D.srv
+    GetMetrics.srv
 #   Service2.srv
 )
 

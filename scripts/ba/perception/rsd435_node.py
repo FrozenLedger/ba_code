@@ -8,9 +8,12 @@ from std_srvs.srv import SetBool,SetBoolResponse
 
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image,PointCloud2
+from geometry_msgs.msg import Vector3
 
 from ba_code.msg import Distance
 from ba_code.srv import TakeSnapshotStamped,TakeSnapshotStampedResponse,GetDistance,GetDistanceResponse
+from ba_code.srv import ClearFrame,ClearFrameResponse,PixelToPoint3D,PixelToPoint3DResponse
+from ba_code.srv import GetMetrics, GetMetricsResponse
 
 from pathlib import Path
 import numpy as np
@@ -52,12 +55,12 @@ class RealSenseD435Server:
         while self.__stream_enable and not rospy.is_shutdown():
             data = self.__camera.take_snapshot()
 
-            header = Header(frame_id="camera_link")
+            #header = Header(frame_id="camera_link")
             
             color_msg = self.__cvbride.cv2_to_imgmsg(data.colorim)
             depth_msg = self.__cvbride.cv2_to_imgmsg(data.depthim)
             
-            depth_data_msg = PointCloud2(header=header)
+            #depth_data_msg = PointCloud2(header=header)
             
             self.__color_pub.publish(color_msg)
             self.__depth_pub.publish(depth_msg)
@@ -69,6 +72,9 @@ class RealSenseD435Server:
         self.__snapshot_server = rospy.Service("/rs_d435/take_snapshot",TakeSnapshotStamped,self.__take_snapshot)
         self.__stream_enabler = rospy.Service("/rs_d435/stream_enable",SetBool,self.__enable_stream)
         self.__distance_server = rospy.Service("rs_d435/get_distance",GetDistance,self.__get_distance)
+        self.__clear_frame_server = rospy.Service("/rs_d435/clear_frame",ClearFrame,self.__clear_frame_request)
+        self.__pixel_to_point3d_server = rospy.Service("/rs_d435/pixel_to_point3d",PixelToPoint3D,self.__pixel_to_point3d)
+        self.__get_distance_metrics_server = rospy.Service("/rs_d435/get_distance_metrics",GetMetrics,self.__distance_metrics_from_area)
         #self.__roi_setter = rospy.Service("/rs_d435/set_roi")
 
     def __init_publisher(self):
@@ -92,7 +98,12 @@ class RealSenseD435Server:
         #data = self.__camera.take_snapshot()
 
         imgID = int(str(rospy.Time.now()))
-        self.__add_frame_buffer(frame_buffer,imgID=imgID)
+
+        if request.add_buffer:
+            try:
+                self.__add_frames(frame_buffer,imgID=imgID)
+            except MemoryError as e:
+                print(e)
 
         try:
             cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
@@ -119,22 +130,46 @@ class RealSenseD435Server:
         response.distance = Distance(*data)
         return response
     
-    def __add_frame_buffer(self,frame_buffer,imgID):
+    def __add_frames(self,frame_buffer,imgID):
         if len(self.__buffer) < self.__max_buffer_size:
             self.__buffer[imgID] = frame_buffer
             self.__buffer_count += 1
-            return True
-        else:
-            print(f"[Warning] Buffer is full. Please clear some frames from the buffer: BufferSize[{len(self.__buffer)}/{self.__max_buffer_size}")
-        return False
+            print(f"[INFO] Added frames to buffer with imgID: {imgID} -> buffer[{self.__buffer_count}/{self.__max_buffer_size}]")
+            return
+        raise MemoryError("[Error] Buffersize exceeded. Please clear some frames from the RealSenseD435.frame_buffer.")
+
+    def __clear_frame_request(self,request):
+        response = ClearFrameResponse()
+        response.success = self.__remove_frames(request.imgID)    
+        return response
     
-    def __remove_frame_buffer(self,imgID):
+    def __remove_frames(self,imgID):
         if imgID in self.__buffer:
             del self.__buffer[imgID]
             self.__buffer_count -= 1
+            print(f"[INFO] Removed frames from buffer with imgID: {imgID} -> buffer[{self.__buffer_count}/{self.__max_buffer_size}]")
             return True
         print(f"[Warning] Frame buffer with imgID:{imgID} not in buffer.")
         return False
+    
+    def __pixel_to_point3d(self,request):
+        imgID = request.imgID
+        if imgID in self.__buffer:
+            (x,y,z) = self.__buffer[imgID].deproject_pixel_to_point3D(request.px,request.py,request.distance)
+            response = PixelToPoint3DResponse()
+            response.point = Vector3(x,y,z)
+            return response
+        raise ValueError(f"No frames with imgID: {imgID} in buffer.")
+    
+    def __distance_metrics_from_area(self,request):
+        response = GetMetricsResponse()
+        try:
+            metrics = self.__buffer[request.imgID].get_distance_metrics(request.roi)
+            response = GetMetricsResponse(metrics=metrics)
+        except Exception as e:
+            response = GetMetricsResponse()
+            print(e)
+        return response
 
 def get_distance(area,px,py,size=0):
         if size == 0:

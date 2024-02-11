@@ -1,4 +1,4 @@
 float32 center
 float32 median
 float32 avg
-float32 var
+float32 std

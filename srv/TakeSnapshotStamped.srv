@@ -1,3 +1,4 @@
+bool add_buffer # adds the frames to the frame buffer -> max 10 frames can be stored
 ---
 std_msgs/Header header
 int64 imgID
