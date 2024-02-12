@@ -55,6 +55,7 @@ add_message_files(
     Distance.msg
     Detection.msg
     Metrics.msg
+    ObjectPosition.msg
 #   Message1.msg
 #   Message2.msg
 )
@@ -69,6 +70,8 @@ add_service_files(
     ClearFrame.srv
     PixelToPoint3D.srv
     GetMetrics.srv
+    GetTrackedObjects.srv
+    RemoveObject.srv
 #   Service2.srv
 )
 

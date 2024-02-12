@@ -59,7 +59,7 @@ def main():
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
     
 
-    max_lin_spd = 0.1
+    max_lin_spd = 0.5#0.1
     min_gap = 2
 
     running = True

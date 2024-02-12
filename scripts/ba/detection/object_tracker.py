@@ -1,81 +1,81 @@
-import rospy,tf
+import rospy
 
-from ba_code.srv import Detect
+from ba_code.msg import ObjectPosition
+from ba_code.srv import GetTrackedObjects, GetTrackedObjectsResponse
+from ba_code.srv import RemoveObject,RemoveObjectResponse
 
-from geometry_msgs.msg import PointStamped,Point
-from visualization_msgs.msg import MarkerArray,Marker
+from std_msgs.msg import String
+#from std_srvs.srv import Empty as EmptySrv
+from std_srvs.srv import Trigger,TriggerResponse
 
-def publish_marker(pnt_arr:PointStamped):
-    pub = rospy.Publisher("/visualization_marker_array",MarkerArray,queue_size=10)
+class ObjectTracker:
+    def __init__(self):
+        self.__clear(None)
+        self.__rate = rospy.Rate(0.1) # publishes objects
+        
+        self.__init_subscriber()
+        self.__init_services()
 
-    arr = []
-    mid = 0
-    for pnt in pnt_arr:
-        marker = Marker()
-        #marker.header.frame_id = "base_link"
-        #marker.header.stamp = rospy.Time.now()
-        marker.header = pnt.header
+    def __init_subscriber(self):
+        self.__object_sub = rospy.Subscriber("/detection/object",ObjectPosition,self.__add_object)
+        self.__trash_sub = rospy.Subscriber("/detection/trash",ObjectPosition,self.__add_object)
 
-        #marker.ns = "basic_shape"
-        marker.type = 2 #Marker.CUBE
-        marker.id = mid
-        mid += 1
+    def __init_services(self):
+        self.__service = rospy.Service("/object_tracker/tracked",GetTrackedObjects,self.__get_tracked_objects)
+        self.__clear_service = rospy.Service("/object_tracker/clear",Trigger,self.__clear)
+        self.__unregister_object_service = rospy.Service("/object_tracker/remove",RemoveObject,self.__unregister_object)
 
-        marker.pose.position = pnt.point
-        #marker.pose.position.x = 1
+    def __clear(self,request):
+        self.__objects = {}
+        resp = TriggerResponse(success = True)
+        return resp
 
-        print(pnt.point)
-        marker.scale.x = 0.05
-        marker.scale.y = 0.05
-        marker.scale.z = 0.05
+    def __add_object(self,msg):
+        point = msg.point.point
+        x = int(point.x*100)
+        y = int(point.y*100)
+        z = int(point.z*100)
+        key = str((x,y,z))
+        if key not in self.__objects:
+            print(f"Add object: {msg}")
+            self.__objects[key] = msg
+                                #{"clsID:":msg.clsID,
+                                # "confidence":msg.confidence,
+                                # "note":msg.note,
+                                # "point":msg.point}
+            print(f"Added new with key: {key}")
+        else:
+            print("[Warning] Object with same key already registered.")
 
-        marker.color.r = 1
-        marker.color.a = 1
+    def __remove_object(self,key):
+        if key in self.__objects:
+            del self.__objects[key]
+            return True
+        return False
 
-        marker.pose.orientation.w = 1
-        arr.append(marker)
+    def __unregister_object(self,request):
+        key = request.key.data
+        response = RemoveObjectResponse()
+        response.success = self.__remove_object(key)
+        return response
 
-    marker_arr = MarkerArray()
-    marker_arr.markers = arr
-    #marker.lifetime = rospy.Duration(5)
-    rate = rospy.Rate(1)
-    while not rospy.is_shutdown():
-        pub.publish(marker_arr)
-        rate.sleep()#rospy.rostime.wallsleep(1)
+    def __get_tracked_objects(self,request):
+        options = request.options
+        print("Options: ", options)
 
-def calcPoint(detection,idx):
-    distance = detection.distance
-    dist = max(distance[idx].median,distance[idx].center)
-    if dist <= 100:
-        print("[Warning] Distance to low. Ignore prediction.")
-    print(detection.clsID[idx],detection.confidence[idx],distance[idx].median)
-
-    return Point(x = dist/1000)
-
-def main():
+        response = GetTrackedObjectsResponse()
+        
+        values = []
+        keys = []
+        for k,v in self.__objects.items():
+            values.append(v)
+            keys.append(String(data=k))
+        response.objects = values
+        response.keys = keys
+        return response
+            
+if __name__ == "__main__":
     rospy.init_node("object_tracker")
 
-    tf_listener = tf.TransformListener()
-
-    service = "/yolov5/detect"
-    print(f"Wait for service: {service}")
-    rospy.wait_for_service(service)
-    print("Ready.")
-
-    server = rospy.ServiceProxy(service,Detect)
-    resp = server()
-
-    target_frame = "base_link"
-    detection = resp.detection
-
-    pnts = []
-    for idx in range(len(detection.clsID)):
-        pnt = PointStamped(header=resp.header)
-        pnt.point = calcPoint(detection,idx)
-        base_pnt = tf_listener.transformPoint(target_frame,pnt)
-        print(f"Transform: {base_pnt}")
-        pnts.append(base_pnt)
-    publish_marker(pnts)
-
-if __name__ == "__main__":
-    main()
+    object_tracker = ObjectTracker()
+    rospy.spin()
