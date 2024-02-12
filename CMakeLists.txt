@@ -176,10 +176,14 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
+    scripts/ba/autonomy/object_collector.py
     scripts/ba/navigation/wall_follower.py
     scripts/ba/visualization/lidar_visualizer.py
+    scripts/ba/visualization/object_visualizer.py
+    scripts/ba/simulation/object_spawner.py
     scripts/ba/perception/rsd435_node.py
     scripts/ba/detection/detection_node.py
+    scripts/ba/detection/object_tracker.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

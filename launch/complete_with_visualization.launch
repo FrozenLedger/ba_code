@@ -15,4 +15,6 @@
         <rosparam command="load" file="$(find ba_code)/param/mapper_params_online_async.yaml" />
     </node>
     <node pkg="ba_code" name="object_tracker" type="object_tracker.py" output="screen" />
+    <node pkg="ba_code" type="lidar_visualizer.py" name="lidar_visualizer" output="screen"></node>
+    <node pkg="ba_code" type="object_visualizer.py" name="object_visualizer" output="screen"></node>
 </launch>

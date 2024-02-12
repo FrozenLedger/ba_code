@@ -4,6 +4,8 @@ from geometry_msgs.msg import TwistStamped,Twist,PoseStamped
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Header
 
+from std_srvs.srv import SetBool,SetBoolResponse
+
 import math
 from math import radians
 import numpy as np
@@ -82,12 +84,85 @@ def calcVelocityII(scan,obstacle=False):
 
     return x,y,min_dist
 
+class WallFollower:
+    def __init__(self,max_spd:float = 0.2,min_gap:float = 2,enabled=False):
+        self.__scan = Data(LaserScan())
+        self.__scan_sub = rospy.Subscriber("/scan",LaserScan,self.__scan.setData)
+        self.__vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
+        self.__max_spd = max_spd
+        self.__min_gap = min_gap
+        self.__enabled = enabled
+        self.__explore_rate = rospy.Rate(10)
+        self.__idle_rate = rospy.Rate(1)
+        self.__state = self.__idle
+
+        self.__enable_service = rospy.Service("/wall_following/enable",SetBool,self.__set_enable)
+        rospy.loginfo(f"WallFollower running. Enabled: {self.__enabled}")
+
+    def __set_enable(self,request):
+        self.__enabled = request.data
+        return SetBoolResponse(success=True)
+
+    def loop(self):
+        while not rospy.is_shutdown():
+            try:
+                self.__state()
+            except Exception as e:
+                print(e)
+            
+    def __idle(self):
+        # State change
+        if self.__enabled:
+            self.__state = self.__follow_wall
+            print("State: follow wall")
+            return
+        # sleep
+        self.__idle_rate.sleep()
+
+    def __follow_wall(self):
+        # State change
+        if not self.__enabled:
+            self.__state = self.__idle
+            print("State: idle")
+            return
+        
+        # Function
+        msg = Twist()
+        msg.linear.x = 1
+
+        ox,oy,min_dist = calcVelocityII(self.__scan,obstacle=True)
+
+        alpha = math.atan2(oy,ox) # obstacle
+        if -math.pi <= alpha < 0:
+            fdir = radians(90)
+        else:
+            fdir = -radians(90)
+        
+        vel = Twist()
+        if (min_dist < 0.4) and inFront(alpha):
+            vel.linear.x = -0.2
+            vel.angular.z = 0.2*(-1)**(math.sin(alpha) > 0)
+        elif min_dist > self.__min_gap:
+            vel.linear.x = math.cos(alpha)
+            vel.angular.z = math.sin(alpha)
+        elif -math.pi <= alpha < 0:
+            vel.linear.x = math.cos(alpha +fdir)
+            vel.angular.z = math.sin(alpha +fdir)
+        else:
+            vel.linear.x = math.cos(alpha +fdir)
+            vel.angular.z = math.sin(alpha +fdir)
+
+        vel.linear.x = max(min(vel.linear.x,self.__max_spd),-self.__max_spd)
+        self.__vel_pub.publish(vel)
+
+        # sleep
+        self.__explore_rate.sleep()
+        
 def main():
     rospy.init_node("wall_drive")
     rospy.loginfo("Start node wall_drive.")
 
     scan = Data(LaserScan())
-    
     sub = rospy.Subscriber("/scan",LaserScan,scan.setData)
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
     
@@ -134,5 +209,10 @@ def main():
     sub.unregister()
     rospy.loginfo("/cmv_vel subscriber unregistered.")
 
+def mainII():
+    rospy.init_node("wall_follower")
+    wall_follower = WallFollower(0.5,2,False)
+    wall_follower.loop()
+
 if __name__ == "__main__":
-    main()
+    mainII()

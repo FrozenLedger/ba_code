@@ -64,7 +64,7 @@ def main():
 
             poly_stamped = build_polygon(dist_arr[indizes],angles[indizes])
             pub.publish(poly_stamped)
-        print(info)
+        #print(info)
         try:
             rate.sleep()
         except rospy.ROSInterruptException:

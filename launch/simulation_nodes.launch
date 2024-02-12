@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="ba_code" type="object_spawner.py" name="object_spawner" output="screen"></node>
+</launch>

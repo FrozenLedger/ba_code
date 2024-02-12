@@ -29,9 +29,9 @@ class ObjectVisualizer:
             #marker.pose.position.x = 1
 
             #print(pnt.point)
-            marker.scale.x = 0.15
-            marker.scale.y = 0.15
-            marker.scale.z = 0.15
+            marker.scale.x = 0.25
+            marker.scale.y = 0.25
+            marker.scale.z = 0.25
 
             #marker.color.r = 1
             marker.color.b = 1
@@ -65,6 +65,8 @@ class ObjectVisualizer:
                 self.__publish()
             except rospy.ServiceException as rse:
                 print(rse)
+            except Exception as e:
+                print(e)
             self.__rate.sleep()
 
 def main():
