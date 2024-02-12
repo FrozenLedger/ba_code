@@ -28,6 +28,7 @@ def calcVelocity(scan,obstacle=False):
     #if min_dist == math.inf:
     #    min_dist = scan.data.range_max
     
+    # indized = np.logical_and(dist_arr <= scan.data.range_max, dist_arr >= scan.data.range_min, not np.nan(dist_arr))
     dist_arr[dist_arr > scan.data.range_max] = scan.data.range_max
     dist_arr[dist_arr < scan.data.range_min] = scan.data.range_max # <---
 
@@ -49,6 +50,38 @@ def calcVelocity(scan,obstacle=False):
 
     return x,y,min_dist
 
+def calcVelocityII(scan,obstacle=False):
+    dist_arr = np.array(scan.data.ranges)
+
+    if len(dist_arr) <= 0:
+        return (0,0,0)
+    
+    #min_dist = np.min(dist_arr)
+    #if min_dist == math.inf:
+    #    min_dist = scan.data.range_max
+    
+    indizes = np.logical_and(dist_arr <= scan.data.range_max, dist_arr >= scan.data.range_min, ~np.isnan(dist_arr))
+    # dist_arr[dist_arr > scan.data.range_max] = scan.data.range_max
+    # dist_arr[dist_arr < scan.data.range_min] = scan.data.range_max # <---
+
+    min_dist = np.nanmin(dist_arr)
+    #print(min_dist)
+    if obstacle:
+        dist_arr[dist_arr > min_dist + 0.2] = 0
+    else:
+        dist_arr[dist_arr > scan.data.range_max] = scan.data.range_max
+
+    start_angle = scan.data.angle_min
+    incr = scan.data.angle_increment
+    N = len(dist_arr)
+    angles = np.array([start_angle + i*incr for i in range(N)])
+
+    (Y,X) = calcVectors(angles[indizes])*dist_arr[indizes]
+    x = np.nanmean(X) #average(X) #np.sum(X)/len(X)
+    y = np.nanmean(Y) #average(Y) #np.sum(Y)/len(Y)
+
+    return x,y,min_dist
+
 def main():
     rospy.init_node("wall_drive")
     rospy.loginfo("Start node wall_drive.")
@@ -58,9 +91,8 @@ def main():
     sub = rospy.Subscriber("/scan",LaserScan,scan.setData)
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
     
-
-    max_lin_spd = 0.5#0.1
-    min_gap = 2
+    max_lin_spd = 0.5 #0.15
+    min_gap = 2 #5
 
     running = True
     rate = rospy.Rate(10)
@@ -68,7 +100,7 @@ def main():
         dir_vel = Twist()
         dir_vel.linear.x = 1
 
-        ox,oy,min_dist = calcVelocity(scan,obstacle=True)
+        ox,oy,min_dist = calcVelocityII(scan,obstacle=True)
 
         alpha = math.atan2(oy,ox) # obstacle
         if -math.pi <= alpha < 0:
