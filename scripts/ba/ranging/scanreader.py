@@ -19,7 +19,7 @@ class VectorSumData:
     min_avg:float
     min_median:float
 
-def _calcVectorSumNormalized(dist_arr,angles,range_max,deviation=0.05):
+def _calcVectorSum(dist_arr,angles,range_max,deviation=0.05):
     try:
         min_dist = max(min_gap,np.min(dist_arr)) # distance to the obstacle with shortest distance or min_gap if within min_gap distance
         if min_dist == math.inf:
@@ -77,10 +77,10 @@ min_angle(default):= -pi
 max_angle(default):= +pi
 add_radius(default):=0.05
 """
-        indizes = np.logical_and(self.angles >= min_angle,self.angles<=max_angle)
+        indizes = np.logical_and(self.angles >= min_angle,self.angles<=max_angle,~np.isnan(self.distances))
 
         dist_arr = self.distances[indizes]
         angles = self.angles[indizes]
         range_max = self.scan.range_max
         
-        return _calcVectorSumNormalized(dist_arr,angles,range_max,deviation)
+        return _calcVectorSum(dist_arr,angles,range_max,deviation)

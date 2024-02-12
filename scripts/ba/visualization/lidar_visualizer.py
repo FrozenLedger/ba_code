@@ -54,14 +54,15 @@ def main():
         if N > 0:
             dist_arr = np.array(data.ranges)
             dist_arr[dist_arr > 12] = 12#data.range_max
-            dist_arr[dist_arr == np.nan] = 12
+            indizes = ~np.isnan(dist_arr)
+            #dist_arr[dist_arr == np.nan] = 12
             #dist_arr[dist_arr == np.inf] = 12
             
             start = data.angle_min
             incr = data.angle_increment
             angles = np.array([start+i*incr for i in range(N)])
 
-            poly_stamped = build_polygon(dist_arr,angles)
+            poly_stamped = build_polygon(dist_arr[indizes],angles[indizes])
             pub.publish(poly_stamped)
         print(info)
         try:
