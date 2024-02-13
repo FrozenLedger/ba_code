@@ -3,12 +3,12 @@ import rospy
 from visualization_msgs.msg import Marker,MarkerArray
 from geometry_msgs.msg import PointStamped
 
-from ba_code.srv import GetTrackedObjects
+import ba_code.srv as basrv
 
 class ObjectVisualizer:
     def __init__(self):
         self.__pub = rospy.Publisher("/visualization_marker_array",MarkerArray,queue_size=10)
-        self.__object_tracker_service = rospy.ServiceProxy("/object_tracker/tracked",GetTrackedObjects)
+        self.__objects_req = rospy.ServiceProxy("/object_tracker/list",basrv.GetObjectList)
         self.__rate = rospy.Rate(0.2)
 
     def __publish_marker(self,pnt_arr:PointStamped):
@@ -47,7 +47,7 @@ class ObjectVisualizer:
         self.__pub.publish(marker_arr)
 
     def __publish(self):
-        objects = self.__object_tracker_service().objects
+        objects = self.__objects_req().objects
 
         pnts = []
         for obj in objects:

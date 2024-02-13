@@ -1,0 +1,2 @@
+geometry_msgs/PointStamped point
+std_msgs/String note

@@ -1,6 +1,6 @@
 import rospy, actionlib
 
-from ba_code.srv import GetTrackedObjects,RemoveObject
+import ba_code.srv as basrv
 
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
@@ -30,31 +30,24 @@ def move_to_point(pnt:Point):
 class ObjectCollector:
     def __init__(self):
         self.__rate = rospy.Rate(0.2) # update every 5s
-
         self.__init_server_proxies()
 
     def __init_server_proxies(self):
-        self.__object_tracker_sub = rospy.ServiceProxy("/object_tracker/tracked",GetTrackedObjects)
+        self.__pop_req = rospy.ServiceProxy("/object_tracker/pop",basrv.PopObject)
 
     def __follow_plan(self):
-        obj_srv = self.__object_tracker_sub()
-        objects = obj_srv.objects
-        keys = obj_srv.keys
+        obj = self.__pop_req().object
 
-        if len(keys) == 0:
+        if obj.note.data == "empty":
             print("There are no objects to collect...")
         else:
             print("Create plan...")
-            self.__collect_object(objects[-1],keys[-1])
+            self.__collect_object(obj)
 
-    def __collect_object(self,obj,key):
+    def __collect_object(self,obj):
         pnt = obj.point.point
         print(f"Move to object at position: {pnt}")
         move_to_point(pnt)
-        print(f"Send /object_tracker/remove {key} request...")
-        unregister = rospy.ServiceProxy("/object_tracker/remove",RemoveObject)
-        res = unregister(key=key)
-        print(f"Result: {res}")
 
     def loop(self):
         while not rospy.is_shutdown():
