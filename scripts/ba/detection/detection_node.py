@@ -53,10 +53,14 @@ class DetectionServer:
         df = data.dataframe
         
         dtype = "int16"
-        result.detection.xmin = df["xmin"].astype(dtype)
-        result.detection.xmax = df["xmax"].astype(dtype)
-        result.detection.ymin = df["ymin"].astype(dtype)
-        result.detection.ymax = df["ymax"].astype(dtype)
+        xmin = df["xmin"].astype(dtype)
+        xmax = df["xmax"].astype(dtype)
+        ymin = df["ymin"].astype(dtype)
+        ymax = df["ymax"].astype(dtype)
+        for idx in range(len(xmin)):
+            w = xmax[idx]-xmin[idx]
+            h = ymax[idx]-ymin[idx]
+            result.detection.roi.append(RegionOfInterest(x_offset=xmin[idx],y_offset=ymin[idx],width=w,height=h,do_rectify=True))
         result.detection.clsID = df["class"]
         result.detection.confidence = df["confidence"]
 
@@ -64,14 +68,15 @@ class DetectionServer:
         distance_metrics = []
         det = result.detection
         for idx,_ in enumerate(det.clsID):
-            w = det.xmax[idx] - det.xmin[idx]
-            h = det.ymax[idx] - det.ymin[idx]
-            roi = RegionOfInterest(x_offset=det.xmin[idx],
-                                   y_offset=det.ymin[idx],
-                                   width=w,
-                                   height=h,
-                                   do_rectify=True)
-            metrics = get_metrics(imgID=imgID,roi=roi).metrics
+            #w = det.xmax[idx] - det.xmin[idx]
+            #h = det.ymax[idx] - det.ymin[idx]
+            #roi = RegionOfInterest(x_offset=det.xmin[idx],
+            #                       y_offset=det.ymin[idx],
+            #                       width=w,
+            #                       height=h,
+            #                       do_rectify=True)
+            #roi = det.roi[idx]
+            metrics = get_metrics(imgID=imgID,roi=det.roi[idx]).metrics
             #detection = DetectionStamped(*metrics)
             distance_metrics.append(metrics) # print("depth", d)
         result.detection.metrics = distance_metrics

@@ -35,11 +35,12 @@ class ObjectTracker:
 
         if h not in self.__objects:
             self.__objects[h] = msg
+            print(f"Object added. hash: {h}, note: {msg.note}")
             return True
         return False
 
     def __calc_hash(self,msg:bamsg.Object):
-        h = (msg.point.point.x,msg.point.point.y,msg.point.point.z)
+        h = (int(msg.point.point.x*100),int(msg.point.point.y*100),int(msg.point.point.z*100))
         return h
     
     def __pop_object(self,_):
