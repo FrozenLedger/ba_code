@@ -3,13 +3,15 @@ import pyrealsense2 as rs
 import numpy as np
 
 from sensor_msgs.msg import RegionOfInterest
+from geometry_msgs.msg import PointStamped, Point
 
 from ba_code.msg import Metrics
 
 class FrameBuffer:
-    def __init__(self,aligned_frames):
+    def __init__(self,aligned_frames,header):
         self.__aligned_frames = aligned_frames
         self.__imgs = {}
+        self.__header = header
 
     @property
     def colorim(self):
@@ -50,7 +52,8 @@ class FrameBuffer:
         return self.pixel_with_distance_to_point3D(px,py,dist)
 
     def deproject_pixel_to_point3D(self,px,py,dist):
-        return rs.rs2_deproject_pixel_to_point(self.intrinsics,[px,py], dist)
+        pnt = rs.rs2_deproject_pixel_to_point(self.intrinsics,[px,py], dist)
+        return PointStamped(header=self.__header,point=Point(*pnt))
 
     def get_distance_metrics(self,roi:RegionOfInterest):
         if roi.do_rectify:
@@ -135,7 +138,7 @@ class RealSenseD435:
         if self.__running:
             self.stop_pipeline()
 
-    def take_snapshot(self) -> FrameBuffer:
+    def take_snapshot(self,header) -> FrameBuffer:
         # based on: https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/align-depth2color.py
         # also based on: https://github.com/InterlRealSense/librealsense/issues/2481
         """Takes a snapshot with the provided camera and saves the results in the [SolarSwarmAssets] folder.
@@ -154,30 +157,13 @@ The sharpened image will be saved in the /sharpened subdirectory."""
         # Align frames
         aligned_frames = self.__alignment.process(frames)
         # Get aligned frames
-        #aligned_depth_frame = aligned_frames.get_depth_frame()
-        #color_frame = aligned_frames.get_color_frame()
-        frame_buffer = FrameBuffer(aligned_frames)
+        frame_buffer = FrameBuffer(aligned_frames,header=header)
 
-        #print(aligned_depth_frame.get_profile())
-        
         # Validate that both frames are valid
         if not frame_buffer.aligned_depth_frame or not frame_buffer.aligned_color_frame:
             return
 
-        # depth_data = frame_buffer.depth_data #np.asanyarray(frame_buffer.aligned_depth_frame.get_data())
-        # color_img = frame_buffer.colorim #color_img = np.asanyarray(frame_buffer.aligned_color_frame.get_data())
-        # depth_img = frame_buffer.depthim #cv2.applyColorMap(cv2.convertScaleAbs(depth_data, alpha=0.03),cv2.COLORMAP_JET)
-
-        # h,w = depth_data.shape
-        # px = w//2
-        # py = h//2
-        # dist = frame_buffer.aligned_depth_frame.get_distance(px,py)
-        # pnt = frame_buffer.pixel_to_point3D(px,py)
-        #print(dist,depth_data[py,px])
-        #print(f"Pnt: {pnt}")
-        #print(frame_buffer.FOV)
-
-        return frame_buffer #DepthImage(colorim=color_img,depthim=depth_img,depth=depth_data)
+        return frame_buffer
     
 def cv_view(frame_rate=1,size=4):
     # based on: https://www.youtube.com/watch?v=mFLZkdH1yLE&t=305s

@@ -2,7 +2,6 @@ import rospy,cv2
 import numpy as np
 
 from ba.detection.yolov5_interface import Yolov5Model,Trashnet,DetectionAdapter
-from ba.perception.rsd435_node import DepthImage
 
 from ba_code.srv import Detect,DetectResponse
 from ba_code.srv import TakeSnapshotStamped, GetMetrics, ClearFrame
@@ -18,10 +17,14 @@ class DetectionServer:
         self.__yolov5 = Yolov5Model()
         self.__trashnet = Trashnet()
 
-        self.__snapshot_server = rospy.ServiceProxy("/rs_d435/take_snapshot/",TakeSnapshotStamped)
+        snapshot_srv = "/rs_d435/take_snapshot/"
+        self.__snapshot_server = rospy.ServiceProxy(snapshot_srv,TakeSnapshotStamped)
 
         self.__init_services()
-        rospy.loginfo("Detection node ready.")
+
+        print("[INFO] Waiting for /rs_d435/take_snapshot service...")
+        rospy.wait_for_service(snapshot_srv)
+        rospy.loginfo("[INFO] Detection node ready.")
 
     def __init_services(self):
         self.__yolov5_server = rospy.Service("/trashnet/detect",Detect,self.__trash_detection)
@@ -37,9 +40,11 @@ class DetectionServer:
             request = self.__snapshot_server(add_buffer=True)
             imgID = request.imgID
             result = DetectResponse(header=request.header)
+            clear_buffer = True
         else:
             result = DetectResponse()
-        
+            clear_buffer = False
+
         #depth = DepthImage.read_depth(inpath=self.__inpath,imgID=imgID)
         
         impath = f"{self.__inpath}/color_{imgID}.jpg"
@@ -55,7 +60,7 @@ class DetectionServer:
         result.detection.clsID = df["class"]
         result.detection.confidence = df["confidence"]
 
-        get_metrics = rospy.ServiceProxy("/rs_d435/get_distance_metrics",GetMetrics)
+        get_metrics = rospy.ServiceProxy("/rs_d435/frames/metrics",GetMetrics)
         distance_metrics = []
         det = result.detection
         for idx,_ in enumerate(det.clsID):
@@ -71,8 +76,9 @@ class DetectionServer:
             distance_metrics.append(metrics) # print("depth", d)
         result.detection.metrics = distance_metrics
 
-        clear_buffer = rospy.ServiceProxy("/rs_d435/clear_frame",ClearFrame)
-        clear_buffer(imgID=imgID)
+        if clear_buffer:
+            clear_buffer = rospy.ServiceProxy("/rs_d435/frames/clear",ClearFrame)
+            clear_buffer(imgID=imgID)
 
         return result
         

@@ -7,13 +7,9 @@ from ba.perception.rsd435_camera import RealSenseD435
 from std_srvs.srv import SetBool,SetBoolResponse
 
 from std_msgs.msg import Header
-from sensor_msgs.msg import Image,PointCloud2
-from geometry_msgs.msg import Vector3
+from sensor_msgs.msg import Image
 
-from ba_code.msg import Distance
-from ba_code.srv import TakeSnapshotStamped,TakeSnapshotStampedResponse,GetDistance,GetDistanceResponse
-from ba_code.srv import ClearFrame,ClearFrameResponse,PixelToPoint3D,PixelToPoint3DResponse
-from ba_code.srv import GetMetrics, GetMetricsResponse
+import ba_code.srv as basrv
 
 from pathlib import Path
 import numpy as np
@@ -58,8 +54,10 @@ class RealSenseD435Server:
             #header = Header(frame_id="camera_link")
             
             color_msg = self.__cvbride.cv2_to_imgmsg(data.colorim)
+            color_msg.header.frame_id = self.__frame_id
             depth_msg = self.__cvbride.cv2_to_imgmsg(data.depthim)
-            
+            depth_msg.header.frame_id = self.__frame_id
+
             #depth_data_msg = PointCloud2(header=header)
             
             self.__color_pub.publish(color_msg)
@@ -69,13 +67,15 @@ class RealSenseD435Server:
             self.__framerate.sleep()
 
     def __init_services(self):
-        self.__snapshot_server = rospy.Service("/rs_d435/take_snapshot",TakeSnapshotStamped,self.__take_snapshot)
+        self.__snapshot_server = rospy.Service("/rs_d435/take_snapshot",basrv.TakeSnapshotStamped,self.__take_snapshot)
         self.__stream_enabler = rospy.Service("/rs_d435/stream_enable",SetBool,self.__enable_stream)
-        self.__distance_server = rospy.Service("rs_d435/get_distance",GetDistance,self.__get_distance)
-        self.__clear_frame_server = rospy.Service("/rs_d435/clear_frame",ClearFrame,self.__clear_frame_request)
-        self.__pixel_to_point3d_server = rospy.Service("/rs_d435/pixel_to_point3d",PixelToPoint3D,self.__pixel_to_point3d)
-        self.__get_distance_metrics_server = rospy.Service("/rs_d435/get_distance_metrics",GetMetrics,self.__distance_metrics_from_area)
-        #self.__roi_setter = rospy.Service("/rs_d435/set_roi")
+        #self.__distance_server = rospy.Service("rs_d435/get_distance",basrv.GetDistance,self.__get_distance)
+        self.__clear_frame_server = rospy.Service("/rs_d435/frames/clear",basrv.ClearFrame,self.__clear_frame_request)
+        self.__color_crame_server = rospy.Service("rs_d435/frames/color",basrv.SendImage,self.__send_color)
+        self.__depth_frame_server = rospy.Service("/rs_d435/frames/depthim",basrv.SendImage,self.__send_depthim)
+        self.__pixel_to_point3d_server = rospy.Service("/rs_d435/frames/deproject_pixel_to_point3d",basrv.PixelToPoint3D,self.__deproject_pixel_to_point3d)
+        self.__get_distance_metrics_server = rospy.Service("/rs_d435/frames/metrics",basrv.GetMetrics,self.__distance_metrics_from_area)
+        #self.__get_distance_metrics_server = rospy.Service("/rs_d435/get_distance_metrics",basrv.GetMetrics,self.__distance_metrics_from_area)
 
     def __init_publisher(self):
         self.__color_pub = rospy.Publisher("/rs_d435/color/image",Image,queue_size=1)
@@ -92,43 +92,59 @@ class RealSenseD435Server:
             response.success = False
             response.message = str(e)
         return response
+    
+    def __send_color(self,request):
+        imgID = request.imgID
+        if imgID not in self.__buffer:
+            return basrv.SendImageResponse()
+        return self.__send_image_response(self.__buffer[imgID].colorim,request.roi)
+
+    def __send_depthim(self,request):
+        imgID = request.imgID
+        if imgID not in self.__buffer:
+            return basrv.SendImageResponse()
+        return self.__send_image_response(self.__buffer[imgID].depthim,request.roi)
+        
+    def __send_image_response(self,img,roi):
+        if roi.do_rectify:
+            img = img[roi.y_offset:roi.y_offset+roi.height, roi.x_offset:roi.x_offset+roi.width]
+        img_msg = self.__cvbride.cv2_to_imgmsg(img)
+        return basrv.SendImageResponse(data=img_msg)
 
     def __take_snapshot(self,request):
-        frame_buffer = self.__camera.take_snapshot()
-        #data = self.__camera.take_snapshot()
+        t0 = rospy.Time.now()
+        header = Header(stamp=t0,frame_id=self.__frame_id)
+        frame_buffer = self.__camera.take_snapshot(header)
 
-        imgID = int(str(rospy.Time.now()))
-
+        imgID = int(str(t0))
         if request.add_buffer:
             try:
                 self.__add_frames(frame_buffer,imgID=imgID)
             except MemoryError as e:
                 print(e)
-
         try:
             cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
             print(f"[INFO] RGB image saved with imgID:{imgID}")
         except Exception as e:
             print(e)
 
-        response = TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
-        #print(f"[Header] {response.header}")
+        response = basrv.TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
         return response
     
-    def __get_distance(self, request):
-        roi = request.roi
-        if roi.do_rectify:
-            region = (roi.x_offset,roi.y_offset,roi.width,roi.height)
-            img = self.__camera.take_snapshot()
-            # debugging: img.write(outpath=self.__outpath,region=region)
-            data = img.region_to_depth(*region,center_size=5)
-        else:
-            img = self.__camera.take_snapshot()
-            # debugging: img.write(outpath=self.__outpath)
-            data = img.image_to_depth(center_size=5)
-        response = GetDistanceResponse()
-        response.distance = Distance(*data)
-        return response
+    #def __get_distance(self, request):
+    #    roi = request.roi
+    #    if roi.do_rectify:
+    #        region = (roi.x_offset,roi.y_offset,roi.width,roi.height)
+    #        img = self.__camera.take_snapshot()
+    #        # debugging: img.write(outpath=self.__outpath,region=region)
+    #        data = img.region_to_depth(*region,center_size=5)
+    #    else:
+    #        img = self.__camera.take_snapshot()
+    #        # debugging: img.write(outpath=self.__outpath)
+    #        data = img.image_to_depth(center_size=5)
+    #    response = basrv.GetDistanceResponse()
+    #    response.distance = bamsg.Distance(*data)
+    #    return response
     
     def __add_frames(self,frame_buffer,imgID):
         if len(self.__buffer) < self.__max_buffer_size:
@@ -139,7 +155,7 @@ class RealSenseD435Server:
         raise MemoryError("[Error] Buffersize exceeded. Please clear some frames from the RealSenseD435.frame_buffer.")
 
     def __clear_frame_request(self,request):
-        response = ClearFrameResponse()
+        response = basrv.ClearFrameResponse()
         response.success = self.__remove_frames(request.imgID)    
         return response
     
@@ -152,22 +168,20 @@ class RealSenseD435Server:
         print(f"[Warning] Frame buffer with imgID:{imgID} not in buffer.")
         return False
     
-    def __pixel_to_point3d(self,request):
+    def __deproject_pixel_to_point3d(self,request):
         imgID = request.imgID
         if imgID in self.__buffer:
-            (x,y,z) = self.__buffer[imgID].deproject_pixel_to_point3D(request.px,request.py,request.distance)
-            response = PixelToPoint3DResponse()
-            response.point = Vector3(x,y,z)
-            return response
+            pnt = self.__buffer[imgID].deproject_pixel_to_point3D(request.px,request.py,request.distance)
+            return basrv.PixelToPoint3DResponse(point=pnt)
         raise ValueError(f"No frames with imgID: {imgID} in buffer.")
     
     def __distance_metrics_from_area(self,request):
-        response = GetMetricsResponse()
+        response = basrv.GetMetricsResponse()
         try:
             metrics = self.__buffer[request.imgID].get_distance_metrics(request.roi)
-            response = GetMetricsResponse(metrics=metrics)
+            response = basrv.GetMetricsResponse(metrics=metrics)
         except Exception as e:
-            response = GetMetricsResponse()
+            response = basrv.GetMetricsResponse()
             print(e)
         return response
 
@@ -188,78 +202,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-class DepthImage:
-    def __init__(self,colorim=np.zeros([]),depthim=np.zeros([]),depth=np.zeros([])):
-        self.__colorim = colorim
-        self.__depthim = depthim
-        self.__depth = depth
-
-    @property
-    def depthim(self):
-        return self.__depthim
-    @property
-    def colorim(self):
-        return self.__colorim
-    @property
-    def depth(self):
-        return self.__depth
-
-    def pixel_to_depth(self, px,py) -> int:
-        """Returns the distance value of the pixelcoordinate (<x>,<y>) read from the depth data."""
-        #return self.__alignment.get_depth_frame().get_distance(x,y)
-        dist = self.__depth_data[py,px]
-        print(f"Distance data at ({px,py} = {dist} mm")
-        return dist #self.__aligned_depth_frames.get_distance(x,y)
-    
-    def image_to_depth(self,center_size=0):
-        return self.__area_to_depth(self.__depth,center_size=center_size)
-    
-    def region_to_depth(self,x_offset,y_offset,width,height,center_size=0):
-        h,w = self.__depth.shape
-        area = self.__depth[max(0,y_offset):min(h,y_offset+height),max(0,x_offset):min(w,x_offset+width)]
-        return self.__area_to_depth(area,center_size=center_size)
-        
-    def __area_to_depth(self,area,center_size=0):
-        h,w = area.shape
-        px = w//2
-        py = h//2
-
-        center_dist = get_distance(area,px=px,py=py,size=center_size)
-        min_dist = np.min(area)
-        max_dist = np.max(area)
-        avg_dist = np.average(area)
-        median_dist = np.median(area)
-
-        return (center_dist,min_dist,max_dist,avg_dist,median_dist)
-        
-    def write(self,outpath:str,region = (0,0,0,0),imgID=0,subname=""):
-        if region == (0,0,0,0):
-            colorim = self.__colorim
-            depthim = self.__depthim
-            deptharr = self.__depth
-        else:
-            h,w = self.__depth.shape
-            x_offset,y_offset,width,height = region
-            x_start = max(0,x_offset)
-            x_end = min(w,x_offset+width)
-            y_start = max(0,y_offset)
-            y_end = min(h,y_offset+height)
-            colorim = self.__colorim[y_start:y_end,x_start:x_end]
-            depthim = self.__depthim[y_start:y_end,x_start:x_end]
-            deptharr = self.__depth[y_start:y_end,x_start:x_end]
-        cv2.imwrite(f"{outpath}/color_{imgID}.jpg",colorim)
-        cv2.imwrite(f"{outpath}/depth_{imgID}.jpg",depthim)
-        with open(f"{outpath}/depth_{imgID}.npy","wb") as npyf:
-            np.save(npyf,deptharr)
-
-    def read(self,inpath:str,imgID=0):
-        self.__colorim = cv2.imread(f"{inpath}/color_{imgID}.jpg")
-        self.__depthim = cv2.imread(f"{inpath}/depth_{imgID}.jpg")
-        return self
-    
-    @classmethod
-    def read_depth(cls,inpath:str,imgID):
-        with open(f"{inpath}/depth_{imgID}.npy","rb") as npyf:
-            depth = np.load(npyf)
-        return DepthImage(depth=depth)

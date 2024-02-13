@@ -72,6 +72,7 @@ add_service_files(
     GetMetrics.srv
     GetTrackedObjects.srv
     RemoveObject.srv
+    SendImage.srv
 #   Service2.srv
 )
 

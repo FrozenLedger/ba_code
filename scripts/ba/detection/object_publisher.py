@@ -3,8 +3,11 @@ import rospy,tf
 from ba_code.srv import Detect
 from ba_code.msg import ObjectPosition
 
+import ba_code.srv as basrv
+
+import numpy as np
+
 from geometry_msgs.msg import PointStamped,Point
-from visualization_msgs.msg import MarkerArray,Marker
 from std_msgs.msg import Header,String
 
 class ObjectPublisherProxy:
@@ -41,11 +44,15 @@ class ObjectPublisherProxy:
 class ObjectPublisher:
     def __init__(self):
         self.__tf_listener = tf.TransformListener()
-        self.__target_frame = "map"
+        self.__world = "map"
         self.__init_subscriptions()
         self.__rate = rospy.Rate(1)
         self.__trash_pub = rospy.Publisher("/detection/trash",ObjectPosition,queue_size=20)
         self.__obj_pub = rospy.Publisher("/detection/objects",ObjectPosition,queue_size=20)
+
+        self.__take_snapshot = rospy.ServiceProxy("/rs_d435/take_snapshot",basrv.TakeSnapshotStamped)
+        self.__clear_frame = rospy.ServiceProxy("/rs_d435/frames/clear",basrv.ClearFrame)
+        self.__pixel_to_point3D = rospy.ServiceProxy("/rs_d435/pixel_to_point3d",basrv.PixelToPoint3D)
 
     def __init_subscriptions(self):
         yolov5_service = "/yolov5/detect"
@@ -67,26 +74,54 @@ class ObjectPublisher:
 
         return Point(x = dist)
     
-    def _publish_object(self,detection,idx):
-        print(f"T[{detection.clsID[idx]}]")
-        self.__trash_pub.publish()
+    def __publish_object(self,detection,idx,snap):
+        dist = max(detection.metrics[idx].center,detection.metrics[idx].median)
+        if dist == 0 or np.isnan(dist):
+            print("[Err]")
+            return
 
-    def _publish_trash(self,detection,idx):
+        w = detection.xmax[idx] - detection.xmin[idx]
+        h = detection.ymax[idx] - detection.ymin[idx]
+        px = detection.xmin[idx] + w//2
+        py = detection.ymax[idx] + h//2
+        
+        pnt = self.__pixel_to_point3D(imgID=snap.imgID,
+                                      px=px,
+                                      py=py,
+                                      distance=dist).point
+
+        pnt = PointStamped(point=pnt,header=snap.header)
+        msg = ObjectPosition(point=pnt,
+                            note=String(data="object"),
+                            clsID=detection.clsID[idx],
+                            confidence=detection.confidence[idx])
+        self.__trash_pub.publish(msg)
+
+    def __publish_trash(self,detection,idx,snap):
         print(f"T[{detection.clsID[idx]}]")
-        self.__obj_pub.publish()
+        
+        #pnt = PointStamped(header=header)
+
+        #msg = ObjectPosition()
+        #self.__obj_pub.publish(msg)
+        return ObjectPosition()
 
     def __publish(self):
-        imgID = self.__take_snapshot(add_buffer=True).imgID
-        object_detection = self.__detect_object(imgID=imgID).detection
-        trash_detection = self.__detect_trash(imgID=imgID).detection
+        snap = self.__take_snapshot(add_buffer=True)
+        imgID = snap.imgID
+        try:
+            object_detection = self.__detect_object(imgID=imgID).detection
+            trash_detection = self.__detect_trash(imgID=imgID).detection
 
-        for idx,_ in enumerate(object_detection.clsID):
-            self.__publish_object(object_detection,idx)
-        for idx,_ in enumerate(trash_detection.clsID):
-            self.__publish_trash(trash_detection,idx)
-
-    def __transform_point(self):
-        pass
+            for idx,_ in enumerate(object_detection.clsID):
+                self.__publish_object(object_detection,idx,snap)
+            for idx,_ in enumerate(trash_detection.clsID):
+                pass
+                #self.__publish_trash(trash_detection,idx,snap)
+        except Exception as e:
+            print(e)
+        finally:
+            self.__clear_frame(imgID)
 
     def loop(self):
         while not rospy.is_shutdown():
@@ -95,8 +130,8 @@ class ObjectPublisher:
 
 def main():
     rospy.init_node("object_publisher")
-    #object_pub = ObjectPublisher()
-    object_pub = ObjectPublisherProxy()
+    object_pub = ObjectPublisher()
+    #object_pub = ObjectPublisherProxy()
     object_pub.loop()
 
 if __name__ == "__main__":

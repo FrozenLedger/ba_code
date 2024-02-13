@@ -3,4 +3,4 @@ int32 px
 int32 py
 float32 distance # estimated distance
 ---
-geometry_msgs/Vector3 point
+geometry_msgs/PointStamped point
