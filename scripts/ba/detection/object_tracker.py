@@ -1,4 +1,4 @@
-import rospy
+import rospy,tf
 
 from ba_code.msg import ObjectPosition
 from ba_code.srv import GetTrackedObjects, GetTrackedObjectsResponse
@@ -11,8 +11,11 @@ from std_srvs.srv import Trigger,TriggerResponse
 class ObjectTracker:
     def __init__(self):
         self.__clear(None)
-        self.__rate = rospy.Rate(0.1) # publishes objects
-        
+        #self.__rate = rospy.Rate(0.1) # publishes objects
+        self.__tf_listener = tf.TransformListener()
+        self.__world = "map"
+        rospy.Rate(1).sleep()
+
         self.__init_subscriber()
         self.__init_services()
 
@@ -31,13 +34,17 @@ class ObjectTracker:
         return resp
 
     def __add_object(self,msg):
-        point = msg.point.point
-        x = int(point.x*100)
-        y = int(point.y*100)
-        z = int(point.z*100)
+        t0 = rospy.Time.now()
+        origin = msg.point.header.frame_id
+        self.__tf_listener.waitForTransform(origin,self.__world,t0,rospy.Duration(0.25))
+        point = self.__tf_listener.transformPoint(self.__world,msg.point)
+        x = int(point.point.x*100)
+        y = int(point.point.y*100)
+        z = int(point.point.z*100)
         key = str((x,y,z))
         if key not in self.__objects:
-            print(f"Add object: {msg}")
+            print(f"Add object: {point}")
+            msg.point = point
             self.__objects[key] = msg
                                 #{"clsID:":msg.clsID,
                                 # "confidence":msg.confidence,
@@ -73,9 +80,11 @@ class ObjectTracker:
         response.objects = values
         response.keys = keys
         return response
-            
-if __name__ == "__main__":
-    rospy.init_node("object_tracker")
 
+def main():
+    rospy.init_node("object_tracker")
     object_tracker = ObjectTracker()
     rospy.spin()
+    
+if __name__ == "__main__":
+    main()

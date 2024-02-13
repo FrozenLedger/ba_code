@@ -1,0 +1,63 @@
+import rospy,tf
+
+from tf.transformations import euler_from_quaternion,quaternion_from_euler
+
+from geometry_msgs.msg import PoseStamped,Twist,Vector3
+from std_msgs.msg import Header
+
+import math
+
+def _unwrap(quaternion):
+    return (quaternion.x,quaternion.y,quaternion.z,quaternion.w)
+
+class ShortDistanceController:
+    def __init__(self):
+        self.__world = "map"
+        self.__base = "base_footprint"
+        self.__tf_listener = tf.TransformListener()
+        self.__rate = rospy.Rate(10)
+        self.__vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
+        self.__tolerance = math.radians(1)
+        self.__rot_spd = 0.2
+        rospy.Rate(1).sleep()
+
+    @property
+    def pose(self):
+        t0 = rospy.Time.now()
+        p0 = PoseStamped(header=Header(frame_id=self.__base,stamp=t0))
+        self.__tf_listener.waitForTransform(self.__base,self.__world,t0,rospy.Duration(0.2))
+        pose = self.__tf_listener.transformPose(self.__world,p0)
+        return pose
+    
+    def __calc_rot(self,pose):
+        orient = pose.pose.orientation
+        rot = euler_from_quaternion(_unwrap(orient))
+        return rot
+
+    def rotate_by(self,angle:float):
+        p0 = self.pose
+        rz0 = self.__calc_rot(p0)[2]
+        rz_goal = rz0 + angle
+
+        print(f"Start: {rz0}\tGoal: {rz_goal}")
+        while not rospy.is_shutdown():
+            try:
+                rz1 = self.__calc_rot(self.pose)[2]
+                if rz_goal - self.__tolerance <= rz1 <= rz_goal + self.__tolerance:
+                    break
+                if rz_goal > rz1:
+                    rot = self.__rot_spd
+                else:
+                    rot = -self.__rot_spd
+                self.__vel_pub.publish(Twist(angular=Vector3(0, 0,rot) ))
+            except Exception as e:
+                print(e)
+            self.__rate.sleep()
+
+def main():
+    rospy.init_node("short_distance_navigator")
+    motor = ShortDistanceController()
+    motor.rotate_by(math.pi/2)
+
+if __name__ == "__main__":
+    main()

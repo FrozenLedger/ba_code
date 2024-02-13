@@ -11,7 +11,8 @@ class ObjectPublisherProxy:
     def __init__(self):
         self.__rate = rospy.Rate(.1)
         self.__tf_listener = tf.TransformListener()
-        self.__target_frame = "map"
+        self.__world = "map"
+        self.__origin = "base_link"
         self.__trash_pub = rospy.Publisher("/detection/trash",ObjectPosition,queue_size=20)
         self.__object_pub = rospy.Publisher("/detection/object",ObjectPosition,queue_size=20)
         self.__tf_listener = tf.TransformListener()
@@ -28,10 +29,12 @@ class ObjectPublisherProxy:
             self.__rate.sleep()
 
     def __publish(self):
-        header = Header(stamp=rospy.Time.now()-rospy.Duration(0.02),frame_id="base_link")
+        t0 = rospy.Time.now()
+        tf.waitForTransform(self.__origin,self.__world,t0,rospy.Duration(1))
+        header = Header(stamp=t0,frame_id=self.__origin)
         cur_pnt = PointStamped(header=header)
 
-        map_pnt = self.__tf_listener.transformPoint(self.__target_frame,cur_pnt)
+        map_pnt = self.__tf_listener.transformPoint(self.__world,cur_pnt)
         msg = ObjectPosition(point=map_pnt,note=String("Type:trash"),clsID=42,confidence=0.5)
         self.__trash_pub.publish(msg)
 

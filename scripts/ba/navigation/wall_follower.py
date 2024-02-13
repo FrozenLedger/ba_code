@@ -96,7 +96,7 @@ class WallFollower:
         self.__idle_rate = rospy.Rate(1)
         self.__state = self.__idle
 
-        self.__enable_service = rospy.Service("/wall_following/enable",SetBool,self.__set_enable)
+        self.__enable_service = rospy.Service("/wall_follower/enable",SetBool,self.__set_enable)
         rospy.loginfo(f"WallFollower running. Enabled: {self.__enabled}")
 
     def __set_enable(self,request):

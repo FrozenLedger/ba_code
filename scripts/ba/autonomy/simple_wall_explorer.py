@@ -18,7 +18,7 @@ def main():
     base = "base_footprint"
     world = "map"
 
-    wallsrv = "wall_following/enable"
+    wallsrv = "wall_follower/enable"
     wall_service = rospy.ServiceProxy(wallsrv,SetBool)
     rospy.wait_for_service(wallsrv)
 
