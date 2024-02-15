@@ -3,7 +3,9 @@ import rospy,tf
 from tf.transformations import euler_from_quaternion,quaternion_from_euler
 
 from geometry_msgs.msg import PoseStamped,Twist,Vector3
-from std_msgs.msg import Header
+from std_msgs.msg import Header,String
+
+import ba_code.srv as basrv
 
 import math
 
@@ -54,10 +56,74 @@ class ShortDistanceController:
                 print(e)
             self.__rate.sleep()
 
+    def rotate_to(self,frame_id):
+        get_dir_req = rospy.ServiceProxy("/direction/get_dir",basrv.GetDirection)
+        msg = Twist()
+
+        pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
+
+        origin = String("base_footprint")
+        target = String(frame_id)
+
+        def rot(msg):
+            if alpha > 0.05:
+                msg.angular.z = 0.1
+            elif alpha < -0.05:
+                msg.angular.z = -0.1
+            else:
+                msg.angular.z = 0
+
+        def lin(mng):
+            if dist > 1:
+                spd = 0.2
+                msg.linear.x = 0.2
+            elif dist > 0.01:
+                spd = 0.05
+                msg.linear.x = 0.05
+            else:
+                spd = 0
+
+            if  not (-math.pi/2 < alpha < math.pi/2):
+                msg.linear.x = -spd
+            else:
+                msg.linear.x = spd
+
+        def calc():
+            pnt = get_dir_req(origin=origin,target=target).vector
+            alpha = math.atan2(pnt.y,pnt.x)
+            dist = math.sqrt(pnt.y**2 + pnt.x**2)
+            return (dist,alpha)
+
+        pnt = get_dir_req(origin=origin,target=target).vector
+        alpha = math.atan2(pnt.y,pnt.x)
+        dist = math.sqrt(pnt.y**2 + pnt.x**2)
+        while not (-0.05 < alpha < 0.05) or (not dist < 0.1):
+            print(f"Phase1 - angle: {alpha}\tdist: {dist}")
+
+            rot(msg)
+            lin(msg)
+
+            pub.publish(msg)
+            self.__rate.sleep()
+
+            dist,alpha = calc()
+
+        msg.angular.z = 0
+        while not dist < 0.01:
+            print(f"Phase2 - angle: {alpha}\tdist: {dist}")
+
+            lin(msg)
+            pub.publish(msg)
+            dist,alpha = calc()
+            
+        print(alpha)
+        print("Done.")
+
 def main():
     rospy.init_node("short_distance_navigator")
     motor = ShortDistanceController()
-    motor.rotate_by(math.pi/2)
+    #motor.rotate_by(math.pi/2)
+    motor.rotate_to("map")
 
 if __name__ == "__main__":
     main()
