@@ -58,6 +58,7 @@ add_message_files(
     Detection.msg
     Metrics.msg
     Object.msg
+    JointAngles.msg
 #   Message1.msg
 #   Message2.msg
 )

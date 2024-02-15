@@ -1,0 +1,4 @@
+<launch>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find ba_code)/urdf/open_manipulator_robot.urdf.xacro' use_mesh:=true" />
+    <node name="robotarm_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+</launch>
