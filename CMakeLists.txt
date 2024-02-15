@@ -182,6 +182,9 @@ catkin_install_python(PROGRAMS
     scripts/ba/visualization/lidar_visualizer.py
     scripts/ba/perception/rsd435_node.py
     scripts/ba/detection/detection_node.py
+    scripts/ba/tracking/object_tracker.py
+    scripts/ba/tracking/object_scout.py
+    scripts/ba/visualization/object_visualizer.py
     # scripts/ba/autonomy/simple_wall_explorer.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

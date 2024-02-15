@@ -133,24 +133,29 @@ class WallFollower:
         ox,oy,min_dist = calcVelocityII(self.__scan,obstacle=True)
 
         alpha = math.atan2(oy,ox) # obstacle
+        alpha -= math.pi/2
+        print(math.degrees(alpha))
+
         if -math.pi <= alpha < 0:
             fdir = radians(90)
         else:
             fdir = -radians(90)
         
+        angularF = 1.25
+
         vel = Twist()
         if (min_dist < 0.4) and inFront(alpha):
-            vel.linear.x = -0.2
+            vel.linear.x = -0.1
             vel.angular.z = 0.2*(-1)**(math.sin(alpha) > 0)
         elif min_dist > self.__min_gap:
             vel.linear.x = math.cos(alpha)
-            vel.angular.z = math.sin(alpha)
+            vel.angular.z = math.sin(alpha)*angularF
         elif -math.pi <= alpha < 0:
             vel.linear.x = math.cos(alpha +fdir)
-            vel.angular.z = math.sin(alpha +fdir)
+            vel.angular.z = math.sin(alpha +fdir)*angularF
         else:
             vel.linear.x = math.cos(alpha +fdir)
-            vel.angular.z = math.sin(alpha +fdir)
+            vel.angular.z = math.sin(alpha +fdir)*angularF
 
         vel.linear.x = max(min(vel.linear.x,self.__max_spd),-self.__max_spd)
         self.__vel_pub.publish(vel)
@@ -166,8 +171,8 @@ def main():
     sub = rospy.Subscriber("/scan",LaserScan,scan.setData)
     vel_pub = rospy.Publisher("/cmd_vel",Twist,queue_size=10)
     
-    max_lin_spd = 0.5 #0.15
-    min_gap = 2 #5
+    max_lin_spd = 0.2 #0.15
+    min_gap = 3 #5
 
     running = True
     rate = rospy.Rate(10)
@@ -178,6 +183,8 @@ def main():
         ox,oy,min_dist = calcVelocityII(scan,obstacle=True)
 
         alpha = math.atan2(oy,ox) # obstacle
+        #alpha += math.pi
+
         if -math.pi <= alpha < 0:
             fdir = radians(90)
         else:
@@ -211,7 +218,7 @@ def main():
 
 def mainII():
     rospy.init_node("wall_follower")
-    wall_follower = WallFollower(0.5,2,False)
+    wall_follower = WallFollower(max_spd=0.2,min_gap=0.75,enabled=False)
     wall_follower.loop()
 
 if __name__ == "__main__":

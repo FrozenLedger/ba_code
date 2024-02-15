@@ -15,6 +15,9 @@ from pathlib import Path
 import numpy as np
 
 class RealSenseD435Server:
+    # Camera link: camera_link
+    # Color image frame: camera_color_optical_frame
+    # Depth image frame: camera_depth_optical_frame
     def __init__(self, frame_id="camera_link",outpath="/tmp/rsd435_images/", width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0,max_buffer_size=10):
         self.__camera = RealSenseD435(width=width,height=height,format=format,framerate=framerate,delay=delay)
 
@@ -197,7 +200,9 @@ def get_distance(area,px,py,size=0):
 
 def main():
     rospy.init_node("rs_d435")
-    rs_server = RealSenseD435Server(delay=0)
+
+    frame_id = "camera_color_optical_frame"
+    rs_server = RealSenseD435Server(delay=0,width=1280,height=720,frame_id=frame_id)
     rospy.spin()
 
 if __name__ == "__main__":

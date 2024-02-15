@@ -1,4 +1,5 @@
 <launch>
+    <!-- Perception Nodes -->
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find ba_code)/urdf/d435_camera.urdf.xacro' use_nominal_extrinsics:=true add_plug:=false use_mesh:=true" />
     <node name="camera_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     <node pkg="ba_code" type="rsd435_node.py" name="rsd435_node" output="screen" />

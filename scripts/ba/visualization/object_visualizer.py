@@ -29,9 +29,9 @@ class ObjectVisualizer:
             #marker.pose.position.x = 1
 
             #print(pnt.point)
-            marker.scale.x = 0.25
-            marker.scale.y = 0.25
-            marker.scale.z = 0.25
+            marker.scale.x = 0.05
+            marker.scale.y = 0.05
+            marker.scale.z = 0.05
 
             #marker.color.r = 1
             marker.color.b = 1

@@ -1,3 +1,4 @@
 <launch>
+    <!-- Objectverankerungs Nodes -->
     <node pkg="ba_code" name="object_tracker" type="object_tracker.py" output="screen" />
 </launch>
