@@ -6,16 +6,30 @@ import moveit_commander
 import moveit_msgs.msg
 #import geometry_msgs.msg
 
+import math
+from ba_code.srv import MoveArm
+
 class JointsController:
     def __init__(self):
         self.__arm = moveit_commander.MoveGroupCommander("arm")
         self.__gripper = moveit_commander.MoveGroupCommander("gripper")
-    
+
+        self.__sub = rospy.Service("/robotarm/move",MoveArm,self.__move_arm)
+        self.__sub = rospy.Service("/robotarm/move_deg",MoveArm,self.__move_by_degrees)
+
     def move_arm(self,values):
         _move_joints(self.__arm,values)
 
     def move_gripper(self,values):
         _move_joints(self.__gripper,values)
+
+    def __move_arm(self,req):
+        angles = req.joints
+        self.move_arm(angles)
+
+    def __move_by_degrees(self,req):
+        angles = [math.radians(d) for d in req.joints]
+        self.move_arm(angles)
 
 ### Testing ###
 def __main():
@@ -61,5 +75,26 @@ def _move_joints(move_group,values):
     move_group.go(joint_goal,wait=True)
     move_group.stop()
 
+def main():
+    rospy.init_node("robotarm_controller")
+
+    moveit_commander.roscpp_initialize(sys.argv)
+    rospy.init_node("move_group_python_interface_tutorial",anonymous=True)
+    robotarm = moveit_commander.RobotCommander()
+    scene = moveit_commander.PlanningSceneInterface()
+    arm = moveit_commander.MoveGroupCommander("arm")
+    gripper = moveit_commander.MoveGroupCommander("gripper")
+    display_trajectory_publisher = rospy.Publisher(
+            "/move_group/display_planned_path",
+            moveit_msgs.msg.DisplayTrajectory,
+            queue_size=10,)
+
+    planning_frame = arm.get_planning_frame()
+    eel_link = arm.get_end_effector_link()
+    group_names = robotarm.get_group_names()
+
+    rospy.loginfo("robotarm_controller ready.")
+    rospy.spin()
+
 if __name__ == "__main__":
-    __main()
+    main()

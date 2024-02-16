@@ -34,4 +34,6 @@
   <!-- startup move_group related -->
   <include file="$(find open_manipulator_moveit_config)/launch/move_group.launch"/>
   <include if="$(arg use_rviz)" file="$(find open_manipulator_moveit_config)/launch/moveit_rviz.launch"/>
+
+  <!-- robot arm manipulator node -->
 </launch>

@@ -78,6 +78,7 @@ add_service_files(
     PopObject.srv
     GetObjectList.srv
     GetDirection.srv
+    MoveArm.srv
 #   Service2.srv
 )
 
