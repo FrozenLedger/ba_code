@@ -8,6 +8,7 @@ from ba_code.srv import TakeSnapshotStamped, GetMetrics, ClearFrame
 
 from std_msgs.msg import Header
 from sensor_msgs.msg import RegionOfInterest
+from std_msgs.msg import String
 
 class DetectionServer:
     def __init__(self,outpath:str = "/tmp/detection", inpath:str = "/tmp/rsd435_images"):
@@ -63,6 +64,7 @@ class DetectionServer:
             result.detection.roi.append(RegionOfInterest(x_offset=xmin[idx],y_offset=ymin[idx],width=w,height=h,do_rectify=True))
         result.detection.clsID = df["class"]
         result.detection.confidence = df["confidence"]
+        result.detection.clsName = [String(data=s) for s in df["name"]]
 
         get_metrics = rospy.ServiceProxy("/rs_d435/frames/metrics",GetMetrics)
         distance_metrics = []

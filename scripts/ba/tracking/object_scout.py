@@ -33,6 +33,7 @@ class ObjectScout:
                     clsID = detection.clsID[idx]
                     conf = detection.confidence[idx]
                     metrics = detection.metrics[idx]
+                    clsName = detection.clsName[idx].data
 
                     dist = max(metrics.center,metrics.median)
                     if dist <= 0.2:
@@ -47,7 +48,10 @@ class ObjectScout:
                                                     distance=dist)
                     obj = bamsg.Object()
                     obj.point = p2p3d_resp.point
-                    obj.note.data = f"ClsID: {clsID}, CNN: {cnn}"
+                    obj.clsID = clsID
+                    obj.clsName.data = clsName
+                    obj.confidence = conf
+                    obj.note.data = f"CNN: {cnn}"
 
                     obj_lst.append(obj)
                     
