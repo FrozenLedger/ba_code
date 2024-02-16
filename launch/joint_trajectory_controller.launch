@@ -1,5 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
+  <remap from="joint_states" to="joint_arm_states" />
+
   <arg name="sim" default="false"/>
   <arg name="usb_port" default="/dev/ttyUSB0" />
   <arg name="use_rviz" default="false"/>
