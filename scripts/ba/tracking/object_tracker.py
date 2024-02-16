@@ -37,7 +37,7 @@ class ObjectTracker:
         if h not in self.__objects:
             self.__objects[h] = msg
             self.__objects[h].objID = self.__count
-            print(f"Object added. h: {h}, note: {msg.note}, objID: {self.__objects[h].objID}, name: {msg.clsName}")
+            print(f"Object added.\nh: {h}\nnote: {msg.note}\nobjID: {self.__objects[h].objID}\nclsID: {self.__objects[h].clsID}\nname: {msg.clsName}\n")
             self.__count += 1
             return True
         return False

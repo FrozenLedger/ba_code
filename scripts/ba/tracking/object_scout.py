@@ -60,7 +60,7 @@ class ObjectScout:
                     pnt2 = (roi.x_offset + roi.width,roi.y_offset + roi.height)
                     imcp = cv2.rectangle(imcp,pnt1,pnt2,c,2)
                 cv2.imwrite(f"/tmp/rsd435_images/marked_{imgID}.jpg",imcp)
-            print("Marked image saved.")
+            print(f"Marked image saved. {imgID}")
 
             for obj in obj_lst:
                 print(f"Publish: {obj.note}")
