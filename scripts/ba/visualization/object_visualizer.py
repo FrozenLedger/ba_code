@@ -7,7 +7,7 @@ import ba_code.srv as basrv
 
 class ObjectVisualizer:
     def __init__(self):
-        self.__pub = rospy.Publisher("/visualization_marker_array",MarkerArray,queue_size=10)
+        self.__pub = rospy.Publisher("/object_tracker/visualization",MarkerArray,queue_size=10)
         self.__objects_req = rospy.ServiceProxy("/object_tracker/list",basrv.GetObjectList)
         self.__rate = rospy.Rate(0.2)
 

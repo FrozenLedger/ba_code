@@ -43,7 +43,7 @@ def main():
     scan = LaserScanData()
     sub = rospy.Subscriber("/scan",LaserScan,scan.setData)
 
-    pub = rospy.Publisher("/poly",PolygonStamped,queue_size=10)
+    pub = rospy.Publisher("/lidar_poly",PolygonStamped,queue_size=10)
 
     rate = rospy.Rate(10)
     seq = 0

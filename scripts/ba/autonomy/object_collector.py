@@ -3,8 +3,11 @@ import rospy, actionlib
 import ba_code.srv as basrv
 
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-
 from geometry_msgs.msg import Point
+
+from ba.navigation.robot import RobotMover
+
+#from tf.transformations import quaternion_from_euler
 
 def move_to_point(pnt:Point):
     # based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
@@ -30,6 +33,7 @@ def move_to_point(pnt:Point):
 class ObjectCollector:
     def __init__(self):
         self.__rate = rospy.Rate(0.2) # update every 5s
+        self.__mover = RobotMover()
         self.__init_server_proxies()
 
     def __init_server_proxies(self):
@@ -45,9 +49,13 @@ class ObjectCollector:
             self.__collect_object(obj)
 
     def __collect_object(self,obj):
-        pnt = obj.point.point
-        print(f"Move to object at position: {pnt}")
-        move_to_point(pnt)
+        #pnt = obj.point.point
+        print(f"Move to object at position: {obj.point.point}")
+        #move_to_point(pnt)
+        self.__mover.move_to_point(obj.point,distance=1)
+        self.__mover.wait_for_result()
+        self.__mover.move_to_point(obj.point,distance=0.5)
+        self.__mover.wait_for_result()
 
     def loop(self):
         while not rospy.is_shutdown():
