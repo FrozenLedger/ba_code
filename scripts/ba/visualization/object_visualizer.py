@@ -11,35 +11,63 @@ class ObjectVisualizer:
         self.__objects_req = rospy.ServiceProxy("/object_tracker/list",basrv.GetObjectList)
         self.__rate = rospy.Rate(0.2)
 
-    def __publish_marker(self,pnt_arr:PointStamped):
+    def __publish_marker(self,markers):
         arr = []
         mid = 0
-        for pnt in pnt_arr:
+        for idx in range(len(markers)):
             marker = Marker()
+            lbl = Marker()
+
+            lbl.text = f"{markers[idx].clsName.data}/{markers[idx].objID}" #f"{markers[idx].note}"
+            # obj = markers[idx][0]
+            color = (0, markers[idx].clsID ,255)
+            alpha = markers[idx].confidence
+            #pnt = obj.point.point
             #marker.header.frame_id = "base_link"
             #marker.header.stamp = rospy.Time.now()
-            marker.header = pnt.header
+            header = markers[idx].point.header
+            marker.header = header
+            lbl.header = header
 
             #marker.ns = "basic_shape"
             marker.type = 2 #Marker.CUBE
             marker.id = mid
-            mid += 1
+            
+            lbl.type = Marker.TEXT_VIEW_FACING
+            lbl.id = mid+1000
+            
+            # increase ID coutner
+            mid += 1    
 
-            marker.pose.position = pnt.point
+            pos = markers[idx].point.point
+            marker.pose.position = pos
+            lbl.pose.position = pos
             #marker.pose.position.x = 1
 
             #print(pnt.point)
             marker.scale.x = 0.05
             marker.scale.y = 0.05
             marker.scale.z = 0.05
+            lbl.scale.x = 0.05
+            lbl.scale.y = 0.05
+            lbl.scale.z = 0.05
 
-            #marker.color.r = 1
-            marker.color.b = 1
-            marker.color.a = 1
+            marker.color.r = color[0]
+            marker.color.g = color[1]
+            marker.color.b = color[2]
+            marker.color.a = alpha
+
+            lbl.color.r = 1
+            lbl.color.g = 0.25
+            lbl.color.b = 0.25
+            lbl.color.a = alpha
+            lbl.pose.orientation.w = 1
+            lbl.lifetime = rospy.Duration(5)
 
             marker.pose.orientation.w = 1
             marker.lifetime = rospy.Duration(5)
             arr.append(marker)
+            arr.append(lbl)
 
         marker_arr = MarkerArray()
         marker_arr.markers = arr
@@ -49,15 +77,15 @@ class ObjectVisualizer:
     def __publish(self):
         objects = self.__objects_req().objects
 
-        pnts = []
+        markers = []
         for obj in objects:
-            pnts.append(obj.point)
+            markers.append( obj )
             #pnt = PointStamped(header=resp.header)
             #pnt.point = calcPoint(detection,idx)
             #print(f"Transform: {base_pnt}")
             #pnts.append(base_pnt)
 
-        self.__publish_marker(pnts)
+        self.__publish_marker( markers )
 
     def loop(self):
         while not rospy.is_shutdown():

@@ -78,7 +78,11 @@ add_service_files(
     PopObject.srv
     GetObjectList.srv
     GetDirection.srv
+<<<<<<< HEAD
     Explore.srv
+=======
+    MoveArm.srv
+>>>>>>> 7414c806ffdcc8f9a18f70d04150ba50db23c075
 #   Service2.srv
 )
 
@@ -190,6 +194,7 @@ catkin_install_python(PROGRAMS
     scripts/ba/tracking/object_tracker.py
     scripts/ba/tracking/object_scout.py
     scripts/ba/visualization/object_visualizer.py
+    scripts/ba/manipulator/joints_controller.py
     # scripts/ba/autonomy/simple_wall_explorer.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

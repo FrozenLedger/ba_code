@@ -12,6 +12,7 @@ class ObjectTracker:
         self.__tf_listener = tf.TransformListener()
         self.__world = world
         self.__init_services()
+        self.__count = 0
 
     def __init_services(self):
         self.__add_object_service = rospy.Service("/object_tracker/add",basrv.AddObject,self.__add_object)
@@ -35,7 +36,9 @@ class ObjectTracker:
 
         if h not in self.__objects:
             self.__objects[h] = msg
-            print(f"Object added. hash: {h}, note: {msg.note}")
+            self.__objects[h].objID = self.__count
+            print(f"Object added.\nh: {h}\nnote: {msg.note}\nobjID: {self.__objects[h].objID}\nclsID: {self.__objects[h].clsID}\nname: {msg.clsName}\n")
+            self.__count += 1
             return True
         return False
 

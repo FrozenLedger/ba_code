@@ -52,7 +52,9 @@ class RealSenseD435Server:
 
     def __publish(self):
         while self.__stream_enable and not rospy.is_shutdown():
-            data = self.__camera.take_snapshot()
+            t0 = rospy.Time.now()
+            header = Header(stamp=t0,frame_id=self.__frame_id)
+            data = self.__camera.take_snapshot(header)
 
             #header = Header(frame_id="camera_link")
             
