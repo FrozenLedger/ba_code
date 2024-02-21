@@ -26,6 +26,9 @@ class ObjectTracker:
             self.__tf_listener.waitForTransform(self.__world,obj.point.header.frame_id,t0,rospy.Duration(1))
 
             obj.point = self.__tf_listener.transformPoint(self.__world,obj.point)
+            if obj.point.point.z > 0.1:
+                print("Object is above 10cm from the ground. Object will not be added to the list.")
+                return False
             return self.__add(obj)
         except Exception as e:
             print(e)

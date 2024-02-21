@@ -1,13 +1,15 @@
-import rospy, actionlib
+import rospy, actionlib, math
 
 import ba_code.srv as basrv
 
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point,PoseStamped
 
 from ba.navigation.robot import RobotMover
-
+from ba.utilities.transformations import quaternion_from_euler
 #from tf.transformations import quaternion_from_euler
+
+from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher,pickupInstructions,dropInstructions
 
 def move_to_point(pnt:Point):
     # based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
@@ -34,16 +36,19 @@ class ObjectCollector:
     def __init__(self):
         self.__rate = rospy.Rate(0.2) # update every 5s
         self.__mover = RobotMover()
+        self.__robotarm = RobotarmPosePublisher()
         self.__init_server_proxies()
 
     def __init_server_proxies(self):
         self.__pop_req = rospy.ServiceProxy("/object_tracker/pop",basrv.PopObject)
 
-    def __follow_plan(self):
+    def follow_plan(self):
         obj = self.__pop_req().object
 
         if obj.note.data == "empty":
             print("There are no objects to collect...")
+        elif obj.clsID not in [1,2,3]:
+            print(f"Object of clsID: {obj.clsID} not collectible. Skip.")
         else:
             print("Create plan...")
             self.__collect_object(obj)
@@ -57,17 +62,36 @@ class ObjectCollector:
         self.__mover.move_to_point(obj.point,distance=0.5)
         self.__mover.wait_for_result()
 
+        print("Start pickup routine.")
+        self.__start_pickup_routine()
+        rospy.sleep(1)
+        trasharea = PoseStamped()
+        trasharea.header.frame_id = "map"
+        trasharea.header.stamp = rospy.Time.now()
+        trasharea.pose.orientation = quaternion_from_euler((0,0,math.pi))
+        
+        print("Move to trash collection area.")
+        self.__mover.move_to_pose(trasharea)
+        rospy.sleep(1)
+        self.__start_drop_routine()
+
+        rospy.loginfo("Finished trash delivery.")
+
     def loop(self):
         while not rospy.is_shutdown():
             try:
-                self.__follow_plan()
+                self.follow_plan()
             except Exception as e:
                 print(e)
             self.__rate.sleep()
 
+    def __start_pickup_routine(self):
+        self.__robotarm.publish(pickupInstructions())
+    def __start_drop_routine(self):
+        self.__robotarm.publish(dropInstructions())
+
 def main():
     rospy.init_node("object_collector")
-
     collector = ObjectCollector()
     collector.loop()
 

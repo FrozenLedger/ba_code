@@ -59,6 +59,7 @@ class ExploreLiteInterface:
             if self.__enabled:
                 self.__explore()
             self.__idle.sleep()
+            
 if __name__ == "__main__":
     rospy.init_node("exploration_runner")
     explorer = ExploreLiteInterface(path="/home/workspace1/github/catkin_ws/src/ba_code/launch")

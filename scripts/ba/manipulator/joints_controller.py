@@ -11,11 +11,12 @@ from ba_code.srv import MoveArm
 
 class JointsController:
     def __init__(self):
+        moveit_commander.roscpp_initialize(sys.argv)
         self.__arm = moveit_commander.MoveGroupCommander("arm")
         self.__gripper = moveit_commander.MoveGroupCommander("gripper")
 
-        self.__sub = rospy.Service("/robotarm/move",MoveArm,self.__move_arm)
-        self.__sub = rospy.Service("/robotarm/move_deg",MoveArm,self.__move_by_degrees)
+        self.__sub_arm = rospy.Service("/robotarm/move",MoveArm,self.__move_arm)
+        self.__sub_arm_deg = rospy.Service("/robotarm/move_deg",MoveArm,self.__move_by_degrees)
 
     def move_arm(self,values):
         _move_joints(self.__arm,values)
@@ -76,7 +77,7 @@ def _move_joints(move_group,values):
     move_group.stop()
 
 def main():
-    rospy.init_node("robotarm_controller")
+    #rospy.init_node("robotarm_controller")
 
     moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node("move_group_python_interface_tutorial",anonymous=True)
@@ -96,5 +97,10 @@ def main():
     rospy.loginfo("robotarm_controller ready.")
     rospy.spin()
 
+def mainII():
+    rospy.init_node("robotarm_controller")
+    controller = JointsController()
+    rospy.spin()
+
 if __name__ == "__main__":
-    main()
+    mainII()

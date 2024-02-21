@@ -15,7 +15,7 @@ class ObjectScout:
         self.__add_object_req = rospy.ServiceProxy("/object_tracker/add",basrv.AddObject)
         self.__rate = rospy.Rate(0.5)
 
-    def __look_around(self,save_im=False):
+    def look_around(self,save_im=False):
         snap_resp = self.__snapshot_req(add_buffer=True)
         try:
             imgID = snap_resp.imgID
@@ -73,7 +73,7 @@ class ObjectScout:
     def loop(self):
         while not rospy.is_shutdown():
             try:
-                self.__look_around()
+                self.look_around()
             except Exception as e:
                 print(e)
             self.__rate.sleep()

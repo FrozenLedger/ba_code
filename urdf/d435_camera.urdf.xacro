@@ -7,7 +7,17 @@
   
   <link name="base_link" />
   <xacro:sensor_d435 parent="base_link" use_nominal_extrinsics="$(arg use_nominal_extrinsics)" add_plug="$(arg add_plug)" use_mesh="$(arg use_mesh)">
-    <origin xyz="0.103 0.0525 0.104" rpy="0 0 0"/>
-    <!-- origin xyz="0.125 0 0.13" rpy="0 0.30984444756778984 0"/ -->
+    
+    <!-- Ohne Aufsatz, linke Seite: trans: (0.103,0.0525,0.104), rot: (0,0,0) -->
+    <!-- origin xyz="0.103 0.0525 0.104" rpy="0 0 0"/ -->
+    
+    <!-- Mit Aufsatz, Angewinkelt, linke Seite: trans: +15mm in x-Richtung, y-Versatz wird beibelassen rot: (0, [0.285,0.3], 0) -->
+    <origin xyz="0.118 0.0525 0.104" rpy="0 0.3 0" />
   </xacro:sensor_d435>
+    
+  <!-- Zur Bestimmung des Kamera Winkels -->
+  <!-- link name="base_footprint" / -->
+  <!-- xacro:sensor_d435 parent="base_footprint" use_nominal_extrinsics="$(arg use_nominal_extrinsics)" add_plug="$(arg add_plug)" use_mesh="$(arg use_mesh)" -->
+    <!-- origin xyz="0.118 0.0525 0.206" rpy="0 0.3 0" / -->
+  <!-- /xacro:sensor_d435 -->
 </robot>
