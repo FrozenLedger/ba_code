@@ -14,6 +14,14 @@
   <!-- Import URDF -->
   <xacro:include filename="$(find open_manipulator_description)/urdf/open_manipulator.urdf.xacro" />
 
+  <!-- base_link -->
+  <link name="base_link">
+  <joint name="base_fixed" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="world"/>
+  </joint>
+
   <!-- World -->
   <link name="world"/>
 

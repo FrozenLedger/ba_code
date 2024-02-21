@@ -1,0 +1,31 @@
+<launch>
+    <!-- Perception Nodes -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find ba_code)/urdf/d435_camera.urdf.xacro' use_nominal_extrinsics:=true add_plug:=false use_mesh:=true" />
+    <node name="camera_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node pkg="ba_code" type="rsd435_node.py" name="rsd435_node" output="screen" />
+    <node pkg="ba_code" type="detection_node.py" name="detection_node" output="screen" />
+
+    <!-- Navigation Nodes -->
+    <include file="$(find amcl)/examples/amcl_diff.launch" />
+    <!-- remap from="/map" to="/slam_toolbox/dynamic_map" / -->
+    <!-- remap from="/cmd_vel" to="/cmd_vel_nav" / -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+        <rosparam file="$(find ba_code)/param/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+        <rosparam file="$(find ba_code)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="$(find ba_code)/param/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find ba_code)/param/global_costmap_params.yaml" command="load" /> 
+        <rosparam file="$(find ba_code)/param/base_local_planner_params.yaml" command="load" />
+    </node>
+
+    <!-- Mapping and Localization Nodes -->
+    <remap from="/slam_toolbox/dynamic_map" to="/map"/>
+    <node pkg="slam_toolbox" type="async_slam_toolbox_node" name="slam_toolbox" output="screen">
+        <rosparam command="load" file="$(find ba_code)/param/mapper_params_online_async.yaml" />
+    </node>
+
+    <!-- Autonomy Nodes -->
+    <node pkg="ba_code" type="wall_follower.py" name="wall_follower" output="screen"></node>
+
+    <!-- Objektverankerungs Nodes -->
+    <node pkg="ba_code" name="object_tracker" type="object_tracker.py" output="screen" />
+</launch>
