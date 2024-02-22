@@ -1,4 +1,5 @@
 <launch>
+    <!-- not working as expected -->
     <remap from="joint_states" to="joint_arm_states" />
     <node pkg="ba_code" type="joints_controller.py" name="joints_controller" output="screen" />
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find ba_code)/urdf/open_manipulator_robot.urdf.xacro' use_mesh:=true" />

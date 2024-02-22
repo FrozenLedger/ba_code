@@ -1,4 +1,5 @@
 <launch>
+    <!-- Starts the nodes used by the jetson-xavier: camera, object-detection & object-anchoring, navigation-stack and slam-->
     <!-- Perception Nodes -->
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find ba_code)/urdf/d435_camera.urdf.xacro' use_nominal_extrinsics:=true add_plug:=false use_mesh:=true" />
     <node name="camera_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
