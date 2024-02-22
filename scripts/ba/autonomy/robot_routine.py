@@ -12,7 +12,7 @@ class RobotRoutine:
     def __init__(self):
         self.__object_collector = ObjectCollector()
         self.__mover = RobotMover()
-        #self.__scout = ObjectScout()
+        self.__scout = ObjectScout()
         #self.__tracker = ObjectTracker()
 
     def start_routine(self):
@@ -31,10 +31,11 @@ class RobotRoutine:
             self.__mover.move_to_point(point)
             self.__mover.wait_for_result()
         #    self.__scout.look_around()
+            self.__object_collector.follow_plan()
 
-        rospy.sleep(1)
-        print("Start collecting objects...")
-        self.__object_collector.follow_plan() # pickup object if there are any objects to collect
+        #rospy.sleep(1)
+        #print("Start collecting objects...")
+        #self.__object_collector.follow_plan() # pickup object if there are any objects to collect
 
         rospy.sleep(1)
         print("Returning home...")
@@ -46,7 +47,7 @@ class RobotRoutine:
         print("End routine...")
 
 def getPath():
-    return [(1,0),(1,-1),(-1,-1),(-1,1),(1,1),(1,0)]
+    return [(1,0),(1,-1),(0.5,-1),(0.5,0),(0.5,1),(1,1),(1,0),(0,0)]
 
 if __name__ == "__main__":
     rospy.init_node("robot_routine")

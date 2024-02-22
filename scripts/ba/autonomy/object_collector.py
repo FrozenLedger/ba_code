@@ -57,24 +57,32 @@ class ObjectCollector:
         #pnt = obj.point.point
         print(f"Move to object at position: {obj.point.point}")
         #move_to_point(pnt)
-        self.__mover.move_to_point(obj.point,distance=1)
+        self.__mover.move_to_point(obj.point,distance=0.75)
         self.__mover.wait_for_result()
         self.__mover.move_to_point(obj.point,distance=0.5)
         self.__mover.wait_for_result()
 
         print("Start pickup routine.")
         self.__start_pickup_routine()
-        rospy.sleep(1)
+        rospy.sleep(.5)
         trasharea = PoseStamped()
         trasharea.header.frame_id = "map"
         trasharea.header.stamp = rospy.Time.now()
         trasharea.pose.orientation = quaternion_from_euler((0,0,math.pi))
         
-        print("Move to trash collection area.")
+        print("Move to position infront of trash collection area.")
+        trasharea.pose.position.x = 1
         self.__mover.move_to_pose(trasharea)
-        rospy.sleep(1)
+        
+        rospy.sleep(.5)
+        print("Move to trash collection area.")
+        trasharea.pose.position.x = 0
+        self.__mover.move_to_pose(trasharea)
+        
+        rospy.sleep(.5)
         self.__start_drop_routine()
 
+        rospy.sleep(.5)
         rospy.loginfo("Finished trash delivery.")
 
     def loop(self):

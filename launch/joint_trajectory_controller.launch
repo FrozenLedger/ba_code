@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
   <remap from="joint_states" to="joint_arm_states" />
+  <remap from="base_link" to="base_arm_link" />
 
   <arg name="sim" default="false"/>
   <arg name="usb_port" default="/dev/ttyUSB0" />
@@ -35,5 +36,9 @@
   <include file="$(find open_manipulator_moveit_config)/launch/move_group.launch"/>
   <include if="$(arg use_rviz)" file="$(find open_manipulator_moveit_config)/launch/moveit_rviz.launch"/>
 
-  <node pkg="ba_code" type="joints_controller.py" name="joints_controller" output="screen" />
+  <!-- not working -->
+  <!-- node pkg="ba_code" type="joints_controller.py" name="joints_controller" output="screen" / -->
+  
+  <!-- Launch the move_to_pose_node -->
+  <node name="move_to_pose_node" pkg="move_to_pose_package" type="move_to_pose.py" output="screen" launch-prefix="bash -c 'sleep 10; $0 $@'" />
 </launch>
