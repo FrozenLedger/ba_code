@@ -34,7 +34,7 @@
 
   <!-- startup move_group related -->
   <include file="$(find open_manipulator_moveit_config)/launch/move_group.launch"/>
-  <include if="$(arg use_rviz)" file="$(find open_manipulator_moveit_config)/launch/moveit_rviz.launch"/>
+  <!-- include if="$(arg use_rviz)" file="$(find open_manipulator_moveit_config)/launch/moveit_rviz.launch"/ -->
 
   <!-- not working -->
   <!-- node pkg="ba_code" type="joints_controller.py" name="joints_controller" output="screen" / -->
