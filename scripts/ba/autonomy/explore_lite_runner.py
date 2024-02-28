@@ -43,22 +43,27 @@ class ExploreLiteInterface:
 
             rospy.sleep(self.__duration)
 
-            launch.shutdown()
+            #launch.shutdown()
         
             self.__success = True
-            rospy.loginfo("End exploration.")
         except Exception as e:
             print(e)
             self.__success = False
         finally:
             self.__enabled = False
             self.__finished = True
+            launch.shutdown()
+            rospy.loginfo("End exploration.")
     
     def loop(self):
-        while not rospy.is_shutdown():
-            if self.__enabled:
-                self.__explore()
-            self.__idle.sleep()
+        running = True
+        while running and not rospy.is_shutdown():
+            try:
+                if self.__enabled:
+                    self.__explore()
+                self.__idle.sleep()
+            except:
+                running = False
             
 if __name__ == "__main__":
     rospy.init_node("exploration_runner")
