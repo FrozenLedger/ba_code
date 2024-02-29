@@ -28,6 +28,7 @@ def manual_pose_publisher():
             rospy.logwarn("Error in input: %s", e)
 
 class RobotarmPosePublisher:
+    """A class to control the angles of the joints of the robot arm, based on the 'move_to_pose_package by Mouheb Khairallah'."""
     def __init__(self,init_node=False,delay=0):
         if init_node:
             self.__node = rospy.init_node('pose_publisher',anonymous=True)
@@ -96,6 +97,7 @@ def manual_publisher():
 #    return steps
 
 def pickupInstructions():
+    """Returns the path to execute the pickup movement of the robotarm."""
     p0 = (0,15,60,-45)
     p1 = (20,15,60,-45)
     p2 = (0,-45,35,-85)
@@ -130,6 +132,7 @@ def pickupInstructions():
     return steps    
 
 def dropInstructions():
+    """Returns the path to execute the drop movement of the robotarm."""
     p0 = (0,15,60,-45)
     p1 = (20,15,60,-45)
     p2 = (90,0,-45,-45)
@@ -150,6 +153,7 @@ def dropInstructions():
     return steps
 
 def testInstructions():
+    """Returns a path to test the robotarm movement."""
     p0 = (0,15,60,-45)
     p1 = (20, 0, 0, 0)
 

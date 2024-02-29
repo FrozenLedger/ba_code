@@ -9,6 +9,8 @@ from ba.tracking.object_tracker import ObjectTracker
 from geometry_msgs.msg import PointStamped
 
 class RobotRoutine:
+    """A routine that controls the autonomous behaviour of the robot to explore a path and track all the objects it is encountering.
+The routine will try to collect all found objects after the exploration."""
     def __init__(self):
         self.__object_collector = ObjectCollector()
         self.__mover = RobotMover()

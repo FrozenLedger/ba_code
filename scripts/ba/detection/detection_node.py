@@ -11,6 +11,11 @@ from sensor_msgs.msg import RegionOfInterest
 from std_msgs.msg import String
 
 class DetectionServer:
+    """A node to enable the ros network to infere images using CNN's that are trained to detect objects and trash.
+Services:
+/trashnet/detect: Detects trash in an image. CNN based on: https://stackoverflow.com/questions/67302634/how-do-i-load-a-local-model-with-torch-hub-load
+/yolov5/detect: Detects objects in an image. Based on ultralytics:Yolov5 pre-trained model.
+"""
     def __init__(self,outpath:str = "/tmp/detection", inpath:str = "/tmp/rsd435_images"):
         self.__outpath = outpath
         self.__inpath = inpath
@@ -37,6 +42,8 @@ class DetectionServer:
         return self.__detect(self.__yolov5,request.imgID)
 
     def __detect(self,cnn,imgID=0):
+        """Makes a request to the 'take_snapshot' service and processes the image to detect objects and trash,
+        as well as calculating distance measurements using the depth information of the depth camera."""
         if imgID == 0:
             request = self.__snapshot_server(add_buffer=True)
             imgID = request.imgID

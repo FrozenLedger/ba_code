@@ -8,6 +8,7 @@ from geometry_msgs.msg import PointStamped, Point
 from ba_code.msg import Metrics
 
 class FrameBuffer:
+    """A class to store information about the depth and color information of an image taken from a scene and calculating the metrics of the depth information of an area in the image."""
     def __init__(self,aligned_frames,header):
         self.__aligned_frames = aligned_frames
         self.__imgs = {}
@@ -77,6 +78,7 @@ class FrameBuffer:
         return Metrics(center=center,median=median,avg=avg,std=std) # returns values in [m]
 
 class RealSenseD435:
+    """A class that will handle the communication with the real sense d435 camera and align the depth information with the color information."""
     def __init__(self, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
         self.__pipeline = rs.pipeline()
         self.__config = rs.config()
@@ -141,10 +143,8 @@ class RealSenseD435:
     def take_snapshot(self,header) -> FrameBuffer:
         # based on: https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/align-depth2color.py
         # also based on: https://github.com/InterlRealSense/librealsense/issues/2481
-        """Takes a snapshot with the provided camera and saves the results in the [SolarSwarmAssets] folder.
-If sharpen is True, then the image will be sharpened using the cv2 library.
-The sharpened image will be saved in the /sharpened subdirectory."""
-        
+        """Takes an image of the scene and returns an object of the class FrameBuffer."""
+
         # Delays the program in order to let the camera adjust to the environment
         dT: float = time.time() - self.__starttime
         if dT <= self.__delay_amount:
@@ -166,6 +166,7 @@ The sharpened image will be saved in the /sharpened subdirectory."""
         return frame_buffer
     
 def cv_view(frame_rate=1,size=4):
+    """A function to visualize the images taken by the real sense camera used for debugging purposes."""
     # based on: https://www.youtube.com/watch?v=mFLZkdH1yLE&t=305s
 
     cam = RealSenseD435()
@@ -193,6 +194,7 @@ def cv_view(frame_rate=1,size=4):
             break
 
 def buffer_test():
+    """A test to ensure the functionalities of the RealSenseD435 buffer."""
     import time
     cam = RealSenseD435()
 

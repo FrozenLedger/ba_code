@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 
 class RealSenseD435Server:
+    """A server node that exposes a limited set of camera functionalities to the ros network."""
     # Camera link: camera_link
     # Color image frame: camera_color_optical_frame
     # Depth image frame: camera_depth_optical_frame
@@ -136,21 +137,6 @@ class RealSenseD435Server:
         response = basrv.TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
         return response
     
-    #def __get_distance(self, request):
-    #    roi = request.roi
-    #    if roi.do_rectify:
-    #        region = (roi.x_offset,roi.y_offset,roi.width,roi.height)
-    #        img = self.__camera.take_snapshot()
-    #        # debugging: img.write(outpath=self.__outpath,region=region)
-    #        data = img.region_to_depth(*region,center_size=5)
-    #    else:
-    #        img = self.__camera.take_snapshot()
-    #        # debugging: img.write(outpath=self.__outpath)
-    #        data = img.image_to_depth(center_size=5)
-    #    response = basrv.GetDistanceResponse()
-    #    response.distance = bamsg.Distance(*data)
-    #    return response
-    
     def __add_frames(self,frame_buffer,imgID):
         if len(self.__buffer) < self.__max_buffer_size:
             self.__buffer[imgID] = frame_buffer
@@ -196,7 +182,7 @@ def get_distance(area,px,py,size=0):
         else:
             h,w = area.shape
             subarea = area[max(0,py-size):min(h,py+size+1),max(0,px-size):min(w,px+size+1)]
-            ah,aw = area.shape
+            #ah,aw = area.shape
             #print(aw,ah,px,py,size)
             return np.median(subarea)
 

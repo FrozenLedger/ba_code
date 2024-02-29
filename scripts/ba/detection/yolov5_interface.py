@@ -4,6 +4,7 @@ import torch, yolov5
 from pathlib import Path
 
 class DetectionAdapter:
+    """An adapter class for easier excess of different data structures from the yolo inference data."""
     def __init__(self,detection):
         self.__detection = detection
 
@@ -43,6 +44,7 @@ class DetectionAdapter:
     #    predpath = pathlib.get_pred_path(imgID)
 
 def Yolov5Model(weights="yolov5m"):
+    """Reads the local model and weights of the yolov5 CNN by Ultralytics if possible. If there are no local weights, the the methode will try to download and save them locally."""
     fname = f"{weights}.pt"
     try:
         model = load(fname)
@@ -57,6 +59,7 @@ def Yolov5Model(weights="yolov5m"):
     return ObjectDetectionModel(model)
 
 def Trashnet():
+    """Reads the local model and weights of the yolov5-detect-trash-classification by turnhancan' if possible. If there are no local weights, then the methode will try to download and save them locally."""
     # based on: https://stackoverflow.com/questions/67302634/how-do-i-load-a-local-model-with-torch-hub-load
     fname = "trashnet.pt"
     try:
@@ -72,18 +75,22 @@ def Trashnet():
     return ObjectDetectionModel(model)
 
 def __path():
+    """Defines the path to the location where the CNN model and its weights will be stored and read from."""
     return f"{Path.home()}/CNN"
 
 def save(model,fname):
+    """Saves the model an its weights locally."""
     path = __path()
     Path(path).mkdir(parents=True,exist_ok=True)
     torch.save(model,f"{path}/{fname}")
 
 def load(fname):
+    """Reads the model given by name and returns it as pytorch-model."""
     path = __path()
     return torch.load(f"{path}/{fname}")    
 
 class ObjectDetectionModel:
+    """Base class for object detection."""
     def __init__(self,model):
         self.__model = model
 

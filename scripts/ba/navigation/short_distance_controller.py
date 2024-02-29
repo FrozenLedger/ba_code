@@ -13,6 +13,7 @@ def _unwrap(quaternion):
     return (quaternion.x,quaternion.y,quaternion.z,quaternion.w)
 
 class ShortDistanceController:
+    """Node to approach a specific point in near distance."""
     def __init__(self):
         self.__world = "map"
         self.__base = "base_footprint"

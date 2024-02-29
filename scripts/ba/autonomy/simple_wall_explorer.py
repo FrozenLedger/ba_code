@@ -10,6 +10,7 @@ from std_srvs.srv import SetBool
 import numpy as np
 
 def main():
+    """Starts the 'wall_explorer' Node that enables a wall following behaviour if enabled."""
     rospy.init_node("simple_wall_explorer")
 
     tf_listener = tf.TransformListener()

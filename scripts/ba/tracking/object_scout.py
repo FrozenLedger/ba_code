@@ -6,6 +6,7 @@ import ba_code.msg as bamsg
 import cv2
 
 class ObjectScout:
+    """A server node that takes an image of a scene and processes the data to detect objects and trash in the scene."""
     def __init__(self):
         self.__snapshot_req = rospy.ServiceProxy("/rs_d435/take_snapshot",basrv.TakeSnapshotStamped)
         self.__clear_frame_req = rospy.ServiceProxy("/rs_d435/frames/clear",basrv.ClearFrame)

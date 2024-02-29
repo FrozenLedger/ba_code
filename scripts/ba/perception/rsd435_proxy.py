@@ -13,6 +13,7 @@ from sensor_msgs.msg import Image
 from ba.perception import DepthImage
 
 class RealSenseD435Proxy:
+    """A class to simulate a real camera in a simulation environment."""
     def __init__(self, inpath, width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0):
         print("Running rs-proxy. This is a simulated camera.")
         self.__inpath = inpath
@@ -59,6 +60,7 @@ class RealSenseD435Proxy:
         return img_data
     
 class RealSenseD435ServerProxy:
+    """A service node to simulate a real camera service node in a simulation environment."""
     def __init__(self,camera,frame_id="rs_camera"):
         self.__camera = camera
 
@@ -74,25 +76,10 @@ class RealSenseD435ServerProxy:
         self.__frame_id = frame_id
         rospy.loginfo("/take_snapshot service initialized.")
 
-    #def __publish(self,data:ImageData):
-        #header = Header(stamp=rospy.Time.now(),frame_id=self.__frame_id,seq=self.__seq)
-        #self.__seq += 1
-        
-        #Image = Image(header=header)
-        #dtype, n_channels = self.__bridge.encoding_as_cvtype2()
-        
-        #rgb_msg = self.__bridge.cv2_to_compressed_imgmsg(data.rgb)
-    #    rgb_msg = self.__bridge.cv2_to_imgmsg(data.rgb)
-
-        #print(type(rgb_msg))
-    #    self.__rgb_pub.publish(rgb_msg)
-
     def take_snapshot(self,msg:TakeSnapshotRequest):
         return self.__camera.take_snapshot().imgID
 
 if __name__ == "__main__":
-    from ba.perception.rscamera_proxy import RealSenseD435Proxy
-
     rospy.init_node("rs435_proxy")
     inpath = "/home/workspace1/rsd435_images/"
     rs_d435_proxy = RealSenseD435Proxy(inpath=inpath)

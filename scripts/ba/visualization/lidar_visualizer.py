@@ -6,6 +6,7 @@ import numpy as np
 from geometry_msgs.msg import Polygon,PolygonStamped,Point32
 
 class LaserScanData:
+    """A class to store LiDAR data."""
     def __init__(self):
         self.__msg = LaserScan()
 
@@ -17,6 +18,7 @@ class LaserScanData:
         self.__msg = msg
 
 def build_polygon(dist_arr,angles,seq=0):
+    """A function to create a visualizable 'geometry_msgs/Polygon' message from LiDAR measurements."""
     N = len(dist_arr)
     points = [Point32() for _ in range(N)]
     for idx,v in enumerate(dist_arr):

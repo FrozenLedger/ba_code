@@ -8,6 +8,7 @@ from sensor_msgs.msg import RegionOfInterest
 import ba_code.srv as basrv
 
 class ObjectDetectionImager:
+    """A node that simplifies the process of detecting objects and trash in the scene and saves the images locally for debuggin purposes."""
     def __init__(self):
         self.__take_snapshot = rospy.ServiceProxy("/rs_d435/take_snapshot",basrv.TakeSnapshotStamped)
         self.__clear_frame = rospy.ServiceProxy("/rs_d435/frames/clear",basrv.ClearFrame)

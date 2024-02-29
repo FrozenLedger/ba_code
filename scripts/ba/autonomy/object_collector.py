@@ -12,7 +12,9 @@ from ba.utilities.transformations import quaternion_from_euler
 from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher,pickupInstructions,dropInstructions
 
 def move_to_point(pnt:Point):
-    # based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
+    """Uses the 'move_base' Node to move to a specified point in the 'map frame' with the orientation set to (0,0,0,1) in quaternions.
+Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/"""
+    #based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
     client = actionlib.SimpleActionClient('move_base',MoveBaseAction)
     client.wait_for_server()
 
@@ -33,6 +35,7 @@ def move_to_point(pnt:Point):
         return client.get_result()
 
 class ObjectCollector:
+    """This node will controll the robot to fullfill the task of collecting objects that have been found in the area."""
     def __init__(self):
         self.__rate = rospy.Rate(0.2) # update every 5s
         self.__mover = RobotMover()
@@ -104,6 +107,7 @@ def main():
     collector.loop()
 
 def main2():
+    """For testing purposes."""
     try:
         rospy.init_node('movebase_client_py')
         result = move_to_point(Point())

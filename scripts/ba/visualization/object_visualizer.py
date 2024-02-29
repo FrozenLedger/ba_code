@@ -6,6 +6,7 @@ from geometry_msgs.msg import PointStamped
 import ba_code.srv as basrv
 
 class ObjectVisualizer:
+    """A node to visualize the detected objects and trash that are tracked by the ObjectTracker."""
     def __init__(self):
         self.__pub = rospy.Publisher("/object_tracker/visualization",MarkerArray,queue_size=10)
         self.__objects_req = rospy.ServiceProxy("/object_tracker/list",basrv.GetObjectList)

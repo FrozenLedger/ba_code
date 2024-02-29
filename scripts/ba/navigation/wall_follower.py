@@ -85,6 +85,7 @@ def calcVelocityII(scan,obstacle=False):
     return x,y,min_dist
 
 class WallFollower:
+    """A node that enables the robot to follow a wall and explore its outline."""
     def __init__(self,max_spd:float = 0.2,min_gap:float = 2,enabled=False):
         self.__scan = Data(LaserScan())
         self.__scan_sub = rospy.Subscriber("/scan",LaserScan,self.__scan.setData)

@@ -7,6 +7,7 @@ from std_srvs.srv import Trigger
 from std_msgs.msg import String
 
 class ObjectTracker:
+    """A server node to track objects and trash detected in the scene."""
     def __init__(self,world="map"):
         self.__objects = {}
         self.__tf_listener = tf.TransformListener()

@@ -1,4 +1,5 @@
 class Data:
+    """A class to simplify the process of storing changes of a published topic."""
     def __init__(self,data):
         self.__data = data
 

@@ -10,6 +10,7 @@ import math
 from ba_code.srv import MoveArm
 
 class JointsController:
+    """A class to controll the robotarm."""
     def __init__(self):
         moveit_commander.roscpp_initialize(sys.argv)
         self.__arm = moveit_commander.MoveGroupCommander("arm")

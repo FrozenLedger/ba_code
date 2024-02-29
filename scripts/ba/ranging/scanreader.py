@@ -44,6 +44,7 @@ def _calcVectorSum(dist_arr,angles,range_max,deviation=0.05):
     # returns the vector and the average of considered values
 
 class ScanReader():
+    """A class to read the measurements of a LiDAR and calculate a vectorsum of all the measurements."""
     def __init__(self,scan: LaserScan):
         self.__scan = scan
         self.__readScan()
