@@ -8,6 +8,7 @@ from move_base_msgs.msg import MoveBaseAction,MoveBaseGoal
 from actionlib_msgs.msg import GoalID
 
 class RobotMover:
+    """A class that simplifies the interaction with the 'move_base' package for controlling the robot movement."""
     def __init__(self,world="map",base="base_link"):
         self.__world = world
         self.__base = base
@@ -77,6 +78,13 @@ class RobotMover:
 
     def wait_for_result(self):
         return self.__move_base_client.wait_for_result()
+    
+    def get_actionclient(self):
+        return self.__move_base_client
+    
+    @property
+    def pose(self):
+        return self.__transform(Pose())
 
 def main():
     rospy.init_node("robot_mover")

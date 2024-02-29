@@ -2,35 +2,47 @@ import ba.autonomy.routines as routines
 
 import rospy
 
+from std_srvs.srv import Trigger,TriggerResponse
+
+from ba.utilities.data import Data
+
 class StateMachine:
     """A first conecpt of a state machine, that controls the autonomous behaviour of the robot."""
     def __init__(self):
-        self.__active_state = routines.ChargeBatteryRoutine()
+        self.__active_state = routines.ChargeBatteryRoutine(self)
+        self.__shutdown_signal_server = rospy.Service("/state_machine/shutdown",Trigger,self.__shutdown_signal_received)
+        self.__battery_low_signal_server = rospy.Service("/state_machine/battery_low",Trigger,self.__battery_low_signal_received)
+        print("State Machine running.")
 
-    def __check_battery(self):
-        return True
+    def __set_active_state(self,new_state):
+        try:
+            self.__active_state = new_state
+            return TriggerResponse(success=True,message="SUCCESS")
+        except Exception as e:
+            print(e)
+            return TriggerResponse(success=False,message="FAILED")
+
+    def __battery_low_signal_received(self,request):
+        return self.__set_active_state( routines.ChargeBatteryRoutine(self) )
     
-    def __check_shutdown(self):
-        return False
+    def __shutdown_signal_received(self,request):
+        return self.__set_active_state( routines.ShutdownRoutine(self) )
     
     def update(self):
-        """To check for interrupts, the update methode will call the necessary funcionalities to check battery-voltage and shutdown signals.
-If no interrupt has been received, then the active state will be executed, wich will set the new active state of the robot.
-The state is expected to set itself as the next active state, if there is no state transition."""
-        if self.__check_shutdown():
-            self.__active_state = routines.ShutdownRoutine(self)
-        elif self.__check_battery():
-            self.__active_state = routines.ChargeBatteryRoutine(self)
-        
+        """Executes the behaviour of the active state. The execute methode of the state is expected to return itself or a different state if a state transition is performed.
+        Further development:
+            * implementation of a 'on_state_enter' method, that will be triggered when a state is entered during a state transition.
+            * implementation of a 'on_state_exit' method, that will be triggered when a state is exited during a state transition."""
         self.__active_state = self.__active_state.execute()
 
 def main():
     """Creates an object of the state machine and runs the update method in a loop to process the states and enable state transitions.
-The loop runs at 100hz, which is !not! in real-time. -> The loop might run slower than 100hz, if a process in the loop is delaying."""
-    FSM = StateMachine()
-    rate = rospy.Rate(100)
-
+The loop runs at 10hz, which is !not! in real-time. -> The loop might run slower than 10hz, if a process in the loop is delaying."""
+    
     rospy.init_node("finite_state_machine")
+    
+    FSM = StateMachine()
+    rate = rospy.Rate(10)
     
     running = True
     while running and not rospy.is_shutdown():
@@ -41,5 +53,21 @@ The loop runs at 100hz, which is !not! in real-time. -> The loop might run slowe
             print(e)
             running = False
 
+def test():
+    rospy.init_node("test_routine")
+    
+    FSM = StateMachine()
+    routine = routines.ShutdownRoutine(FSM)
+
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        try:
+            routine.execute()
+            rate.sleep()
+        except rospy.exceptions.ROSInterruptException as e:
+            print(e)
+            break
+
 if __name__ == "__main__":
     main()
+    #test()

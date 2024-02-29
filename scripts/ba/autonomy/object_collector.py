@@ -42,51 +42,136 @@ class ObjectCollector:
         self.__robotarm = RobotarmPosePublisher()
         self.__init_server_proxies()
 
+        self.__substate = self.__look_for_object
+
+        self.__trasharea = PoseStamped()
+        self.__trasharea.header.frame_id = "map"
+        self.__trasharea.pose.orientation = quaternion_from_euler((0,0,math.pi))
+
     def __init_server_proxies(self):
         self.__pop_req = rospy.ServiceProxy("/object_tracker/pop",basrv.PopObject)
 
     def follow_plan(self):
-        obj = self.__pop_req().object
+        return self.__substate()
+        #if obj.note.data == "empty":
+        #    print("There are no objects to collect...")
+        #    return False
+        #elif obj.clsID not in [1,2,3]:
+        #    print(f"Object of clsID: {obj.clsID} not collectible. Skip.")
+        #else:
+        #    print("Create plan...")
+        #    self.__collect_object(obj)
+        #return True
+    
+    def __print_state_execution(self,statename):
+        print(f"ObjectCollector state execution: {statename}")
+    
+    def __look_for_object(self):
+        self.__print_state_execution("look for object")
+        try:
+            obj = self.__pop_req().object
+            if obj.note.data == "empty":
+                print("There are no objects to collect...")
+                return False
+            elif obj.clsID not in [1,2,3]:
+                print(f"Object of clsID: {obj.clsID} not collectible. Skip.")
+            else:
+                print("Object found...")
+                self.__target_object = obj
+                self.__substate = self.__move_to_object # set next substate
+            return True
+        except Exception as e:
+            print(e)
+        return False
+    
+    def __move_to_object(self):
+        self.__print_state_execution("move to object")
+        try:
+            obj = self.__target_object
+            actionstate = self.__mover.get_actionclient().get_state()
+            print(f"move_base ActionState: {actionstate}")
 
-        if obj.note.data == "empty":
-            print("There are no objects to collect...")
-        elif obj.clsID not in [1,2,3]:
-            print(f"Object of clsID: {obj.clsID} not collectible. Skip.")
-        else:
-            print("Create plan...")
-            self.__collect_object(obj)
+            if actionstate is 1:
+                print("Waiting for robot to reach goal...")
+                return True
+            elif actionstate in [0,9]:
+                print(f"Move to object at position: {obj.point.point}")
+                self.__mover.move_to_point(obj.point,distance=0.75)
+            elif actionstate == 3:
+                print(f"Position reached.")
+                self.__substate = self.__approach_object
+            else:
+                self.__raise_invalid_action_state_exception()
+            return True            
+        except Exception as e:
+            print(e)
+        return False
+    
+    def __approach_object(self):
+        self.__print_state_execution("approach object")
+        try:
+            self.__mover.move_to_point(self.__target_object.point,distance=0.5)
+            self.__mover.wait_for_result()
 
-    def __collect_object(self,obj):
-        #pnt = obj.point.point
-        print(f"Move to object at position: {obj.point.point}")
-        #move_to_point(pnt)
-        self.__mover.move_to_point(obj.point,distance=0.75)
-        self.__mover.wait_for_result()
-        self.__mover.move_to_point(obj.point,distance=0.5)
-        self.__mover.wait_for_result()
+            self.__substate = self.__pickup_object
+            return True
+        except Exception as e:
+            print(e)
+        return False
 
-        print("Start pickup routine.")
-        self.__start_pickup_routine()
-        rospy.sleep(.5)
-        trasharea = PoseStamped()
-        trasharea.header.frame_id = "map"
-        trasharea.header.stamp = rospy.Time.now()
-        trasharea.pose.orientation = quaternion_from_euler((0,0,math.pi))
+    def __pickup_object(self):
+        self.__print_state_execution("pickup object")
+        try:
+            print("Start pickup routine.")
+            self.__start_pickup_routine()
+            rospy.sleep(.5)
+
+            self.__substate = self.__move_to_trash_area
+            return True
+        except Exception as e:
+            print(e)
+        return False
+
+    def __move_to_trash_area(self):
+        self.__print_state_execution("move to trash area")
+        try:
+            print("Move to position infront of trash collection area.")
+            self.__trasharea.header.stamp = rospy.Time.now()
+            self.__trasharea.pose.position.x = 1
+            self.__mover.move_to_pose(self.__trasharea)
+            self.__mover.wait_for_result()
         
-        print("Move to position infront of trash collection area.")
-        trasharea.pose.position.x = 1
-        self.__mover.move_to_pose(trasharea)
-        
-        rospy.sleep(.5)
-        print("Move to trash collection area.")
-        trasharea.pose.position.x = 0
-        self.__mover.move_to_pose(trasharea)
-        
-        rospy.sleep(.5)
-        self.__start_drop_routine()
+            rospy.sleep(.5)
+            print("Move to trash collection area.")
+            self.__trasharea.header.stamp = rospy.Time.now()
+            self.__trasharea.pose.position.x = 0
+            self.__mover.move_to_pose(self.__trasharea)
+            self.__mover.wait_for_result()
 
-        rospy.sleep(.5)
-        rospy.loginfo("Finished trash delivery.")
+            self.__substate = self.__drop_trash
+            return True
+        except Exception as e:
+            print(e)
+        return False
+    
+    def __drop_trash(self):
+        self.__print_state_execution("drop trash")
+        try:
+            self.__start_drop_routine()
+            rospy.sleep(0.5)
+
+            self.__substate = self.__look_for_object
+            return True
+        except Exception as e:
+            print(e)
+        return False
+
+    #def __collect_object(self,obj):
+    #    rospy.sleep(.5)
+    #    self.__start_drop_routine()
+
+    #    rospy.sleep(.5)
+    #    rospy.loginfo("Finished trash delivery.")
 
     def loop(self):
         while not rospy.is_shutdown():
@@ -100,6 +185,9 @@ class ObjectCollector:
         self.__robotarm.publish(pickupInstructions())
     def __start_drop_routine(self):
         self.__robotarm.publish(dropInstructions())
+
+    def __raise_invalid_action_state_exception(self):
+        raise Exception("The action client reached a state that has not been handled by the ObjectCollector yet.")
 
 def main():
     rospy.init_node("object_collector")
