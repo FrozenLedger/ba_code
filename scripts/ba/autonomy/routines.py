@@ -10,7 +10,7 @@ from std_srvs.srv import SetBool
 from ba.utilities.data import Data
 from ba.autonomy.object_collector import ObjectCollector
 from ba_code.srv import GetObjectList
-from ba.navigation.QuadtreeExplorer import QuadtreeExplorer
+from ba.navigation.quadtree_explorer import QuadtreeExplorer
 
 import numpy as np
 

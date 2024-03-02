@@ -194,6 +194,7 @@ catkin_install_python(PROGRAMS
     scripts/ba/manipulator/joints_controller.py
     scripts/ba/autonomy/state_machine.py
     scripts/ba/simulation/object_spawner.py
+    scripts/ba/utilities/mapexpander.py
     # scripts/ba/autonomy/simple_wall_explorer.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

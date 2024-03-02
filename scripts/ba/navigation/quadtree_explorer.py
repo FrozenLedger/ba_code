@@ -23,7 +23,6 @@ class QuadtreeMap:
         self.__boundaries = boundaries
         self.__sorted_scores = []
 
-        count = 0
         for idx,boundarie in enumerate(self.__boundaries):
             top,left,width,height = boundarie
 
@@ -34,7 +33,7 @@ class QuadtreeMap:
             
             self.__sorted_scores.append((idx,SCORE))
         self.__sorted_scores.sort(key=lambda x: x[1],reverse=True)
-        print(count)
+        print(len(self.__sorted_scores))
 
     @property
     def boundaries(self):
@@ -74,7 +73,7 @@ class QuadtreeExplorer:
         self.__timestamp = 0
         self.__progress = 0
         self.__state = self.__refresh_map
-        self.__max_process_delay = rospy.Duration(45)
+        self.__max_process_delay = rospy.Duration(30)
 
         rospy.wait_for_service("/slam_toolbox/save_map")
         self.__update_pgm()
@@ -98,10 +97,14 @@ class QuadtreeExplorer:
         self.__tilemap = create_quadtree(self.__im,self.__filter)
         #self.__last_update_ts = rospy.Time.now()
 
+        #H,W = self.__im.shape
         imcp = self.__im.copy()
+
         mark_bounds(imcp,self.__tilemap.boundaries)
         rosimg = self.__cv_bridge.cv2_to_imgmsg(imcp)
         self.__tilemap_publisher.publish(rosimg)
+        #cv2.imwrite("/tmp/imcp.pgm",imcp)
+        #cv2.imwrite("/tmp/im.pgm",self.__im)
         self.__marked_regions = {}
 
     def explore(self):
@@ -118,17 +121,20 @@ class QuadtreeExplorer:
 
     def __set_target(self):
         print("### Set new target ###")
-        for idx in range(len(self.__tilemap.sorted_scores)):
+        N = len(self.__tilemap.sorted_scores)
+        print(f"\tRegions: {N}")
+        print(f"\tExplored regions: {len(self.__explored_regions)}")
+        for idx in range(N):
             boundsindex = self.__tilemap.sorted_scores[idx][0]
             max_unexplored = self.__tilemap.boundaries[boundsindex]
-            if max_unexplored in self.__marked_regions or self.__target == max_unexplored or self.__target in self.__explored_regions:
+            if max_unexplored in self.__marked_regions or max_unexplored == self.__target or max_unexplored in self.__explored_regions:
                 max_unexplored = 0
                 continue
             break
 
         if not max_unexplored:
             print(f"\tNo more unexplored regions. Force reset.")
-            self.__explored_regions = {}
+            #self.__explored_regions = {}
             self.__marked_regions = {}
             return self.__refresh_map
         
@@ -189,7 +195,7 @@ class QuadtreeExplorer:
             print(f"\tFailed to move by more than {self.__min_move_distance}m.")
             print(f"\t\tMark region: {self.__target}")
             self.__marked_regions[self.__target] = 1
-            return self.__set_target        
+            return self.__set_target
 
         if rospy.Time.now() - self.__start_time > self.__max_process_delay:
             print("\tMax exploration time exceeded.")
@@ -222,7 +228,7 @@ def create_quadtree(im,filterfunction=lambda x: np.min(x) < 50):
     HEIGHT = im.shape[0]
     WIDTH = im.shape[1]
 
-    boundaries = split(im,(0,0,WIDTH,HEIGHT),depth=0,max_depth=4,filter=filterfunction)# ,filter=lambda x: np.min(x) <= 210)
+    boundaries = split(im,(0,0,WIDTH,HEIGHT),depth=0,max_depth=4,filter=filterfunction,bounds=[])# ,filter=lambda x: np.min(x) <= 210)
 
     print(f"\tBounds|Sub-Images: {len(boundaries)}")
     tilemap = QuadtreeMap(im,boundaries)
@@ -240,7 +246,7 @@ def test():
 
     HEIGHT,WIDTH = im.shape
 
-    boundaries = split(im,(0,0,WIDTH,HEIGHT),depth=0,max_depth=7)# ,filter=lambda x: np.min(x) <= 210)
+    boundaries = split(im,(0,0,WIDTH,HEIGHT),depth=0,max_depth=7,bounds=[])# ,filter=lambda x: np.min(x) <= 210)
 
     print(f"Bounds|Sub-Images: {len(boundaries)}")
     #display(im,boundaries)
