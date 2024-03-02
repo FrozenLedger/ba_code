@@ -10,7 +10,7 @@ from std_srvs.srv import SetBool
 from ba.utilities.data import Data
 from ba.autonomy.object_collector import ObjectCollector
 from ba_code.srv import GetObjectList
-from ba.navigation.tilemap_explorer import TilemapExplorer
+from ba.navigation.QuadtreeExplorer import QuadtreeExplorer
 
 import numpy as np
 
@@ -61,7 +61,7 @@ class ExploreRegionRoutine(IRoutine):
     def __init__(self, FSM):
         super().__init__(FSM)
         #self.__wall_follower_client = rospy.ServiceProxy("/wall_follower/enable",SetBool)
-        self.__explorer = TilemapExplorer(filterfunction=lambda x: np.max(x) > 240)
+        self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
         
         self.__object_tracker_request = rospy.ServiceProxy("/object_tracker/list",GetObjectList)
 

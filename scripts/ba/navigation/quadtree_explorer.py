@@ -17,7 +17,7 @@ from ba.utilities.imageprocessing import mark_bounds, split
 
 from cv_bridge import CvBridge
 
-class TileMap:
+class QuadtreeMap:
     def __init__(self,im,boundaries):
         self.__im = im
         self.__boundaries = boundaries
@@ -52,7 +52,7 @@ class TileMap:
         except Exception as e:
             print(e)
 
-class TilemapExplorer:
+class QuadtreeExplorer:
     def __init__(self,pgmpath="/tmp/exploremap",filterfunction=lambda x: np.min(x) < 50):
         self.__map_saver = rospy.ServiceProxy("/slam_toolbox/save_map",SaveMap)
         self.__pgmpath = pgmpath
@@ -95,7 +95,7 @@ class TilemapExplorer:
         self.__map_saver(SaveMapRequest(name=String(self.__pgmpath)))    
 
         self.__im = cv2.imread(f"{self.__pgmpath}.pgm",cv2.IMREAD_GRAYSCALE)
-        self.__tilemap = create_tilemap(self.__im,self.__filter)
+        self.__tilemap = create_quadtree(self.__im,self.__filter)
         #self.__last_update_ts = rospy.Time.now()
 
         imcp = self.__im.copy()
@@ -212,7 +212,7 @@ class TilemapExplorer:
         print("\tGoal not reached yet.")
         return self.__delay
 
-def create_tilemap(im,filterfunction=lambda x: np.min(x) < 50):
+def create_quadtree(im,filterfunction=lambda x: np.min(x) < 50):
     def MaxFilter(image,kernel):
         kernel = np.ones((kernel,kernel),np.uint8)
         return cv2.erode(image,kernel)
@@ -225,7 +225,7 @@ def create_tilemap(im,filterfunction=lambda x: np.min(x) < 50):
     boundaries = split(im,(0,0,WIDTH,HEIGHT),depth=0,max_depth=4,filter=filterfunction)# ,filter=lambda x: np.min(x) <= 210)
 
     print(f"\tBounds|Sub-Images: {len(boundaries)}")
-    tilemap = TileMap(im,boundaries)
+    tilemap = QuadtreeMap(im,boundaries)
     return tilemap
 
 def test():
@@ -245,7 +245,7 @@ def test():
     print(f"Bounds|Sub-Images: {len(boundaries)}")
     #display(im,boundaries)
    
-    tilemap = TileMap(im,boundaries)
+    tilemap = QuadtreeMap(im,boundaries)
     
     max_unexplored = tilemap.max_unexplored
     print(max_unexplored)
@@ -256,9 +256,9 @@ def test():
     print("Test done.")
 
 def main():
-    rospy.init_node("splitmap_explorer")
+    rospy.init_node("quadtree_explorer")
 
-    explorer = TilemapExplorer(pgmpath="/home/workspace1/tilemap")
+    explorer = QuadtreeExplorer(pgmpath="/home/workspace1/quadtreemap")
 
     rate = rospy.Rate(0.1)
     while not rospy.is_shutdown():
