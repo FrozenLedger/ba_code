@@ -12,6 +12,8 @@ from ba.autonomy.object_collector import ObjectCollector
 from ba_code.srv import GetObjectList
 from ba.navigation.tilemap_explorer import TilemapExplorer
 
+import numpy as np
+
 class IRoutine:
     def __init__(self,FSM):
         self.__FSM = FSM
@@ -59,45 +61,18 @@ class ExploreRegionRoutine(IRoutine):
     def __init__(self, FSM):
         super().__init__(FSM)
         #self.__wall_follower_client = rospy.ServiceProxy("/wall_follower/enable",SetBool)
-        self.__explorer = TilemapExplorer()
-
-        self.__last_tick = rospy.Time.now()
-        self.__rate = rospy.Duration(5)
-
+        self.__explorer = TilemapExplorer(filterfunction=lambda x: np.max(x) > 240)
+        
         self.__object_tracker_request = rospy.ServiceProxy("/object_tracker/list",GetObjectList)
 
-        #self.__entered = False
-
-    #def on_enter(self):
-    #    self.__wall_follower_client(True)
-    #    self.__entered = True
-
     def execute(self):
-        #if not self.__entered:
-        #    print("Enable: wall_follower routine.")
-        #    print("Executing: wall_follower routine.")
-        #    self.on_enter()
-
         garbage_detected = len(self.__object_tracker_request().objects) > 0
         if garbage_detected:
             print("State transition -> CollectGarbageRoutine")
             return CollectGarbageRoutine(self.FSM)
-        
-        dT = rospy.Time.now() - self.__last_tick
-        if dT > self.__rate:
-            print("Execute explore behaviour...")
-            self.__explorer.explore()
-            self.__last_tick = rospy.Time.now()
 
+        self.__explorer.explore()
         return self
-
-    #def on_exit(self):
-    #    print("Disable: wall_follower routine.")
-    #    self.__wall_follower_client(False)
-    #    self.__entered = False
-
-    #def __del__(self):
-    #    self.on_exit()
 
 class ShutdownRoutine(IRoutine):
     """Routine to move the robot to the starting location and forces the ros node to shutdown.
