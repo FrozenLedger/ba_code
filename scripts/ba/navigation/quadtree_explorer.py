@@ -143,7 +143,7 @@ class QuadtreeExplorer:
         return self.__move_to_target
 
     def __move_to_target(self):
-        print("### Move to target ###")
+        print("### Move to target region ###")
         HEIGHT = self.__im.shape[0]
 
         minx,miny,width,height = self.__target #max_unexplored
