@@ -5,3 +5,4 @@ log/
 ba.egg-info/
 yolov5m.pt
 log/
+.vscode
