@@ -173,8 +173,10 @@ if __name__ == '__main__':
     elif opt == "--publisher" or opt == "-p":
         manual_publisher()
     else:
-        rospy.sleep(2)
+        rospy.sleep(1)
         publisher = RobotarmPosePublisher(init_node=True,delay=1)
         #publisher.publish(testInstructions())
-        #publisher.publish(pickupInstructions())#,rospy.Rate(0.25))
+        rospy.sleep(1)
+        publisher.publish(pickupInstructions())#,rospy.Rate(0.25))
+        rospy.sleep(1)
         publisher.publish(dropInstructions())
