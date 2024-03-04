@@ -35,5 +35,6 @@ roslaunch ba_code joint_trajectory_controller.launch
 https://answers.ros.org/question/318086/using-two-robots-two-robot_description-in-ros/
 
 ## Fixes
+### The jetson launch file was edited:
 static transform from base_link to world
 static transform from base_footprint to base_link
