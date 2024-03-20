@@ -1,0 +1,52 @@
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><element><id>UMLClass</id><coordinates><x>1100</x><y>100</y><w>180</w><h>30</h></coordinates><panel_attributes>ROS / ROS2 - Network</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>460</x><y>460</y><w>140</w><h>80</h></coordinates><panel_attributes>ExploreNode
+--
+- FSM: string
+- behaviour: Behaviour
+--
++ tick(): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>610</x><y>460</y><w>140</w><h>80</h></coordinates><panel_attributes>CollectGarbageNode
+--
+- FSM: string
+- behaviour: Behaviour
+--
++ tick(): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>470</x><y>630</y><w>140</w><h>110</h></coordinates><panel_attributes>Behaviour
+--
+- FSM: string
+--
++ tick(): void
+- onEnter(): void
+- onExit(): void
+- onShutdown(): void
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>270</x><y>640</y><w>100</w><h>50</h></coordinates><panel_attributes>QuadtreeExplorer
+--
+--
++ tick(): void</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>360</x><y>660</y><w>130</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>110;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>550</x><y>530</y><w>30</w><h>120</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;100</additional_attributes></element><element><id>Relation</id><coordinates><x>570</x><y>530</y><w>120</w><h>120</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>100;10;100;60;10;60;10;100</additional_attributes></element><element><id>UMLClass</id><coordinates><x>760</x><y>460</y><w>140</w><h>80</h></coordinates><panel_attributes>ShutdownNode
+--
+- FSM: string
+- behaviour: Behaviour
+--
++ tick(): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>910</x><y>460</y><w>140</w><h>80</h></coordinates><panel_attributes>ChargeBatteryNode
+--
+- FSM: string
+- behaviour: Behaviour
+--
++ tick(): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1060</x><y>460</y><w>140</w><h>80</h></coordinates><panel_attributes>EmptyStorageNode
+--
+- FSM: string
+- behaviour: Behaviour
+--
++ tick(): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>110</x><y>320</y><w>280</w><h>110</h></coordinates><panel_attributes>StateNode
+--
+- FSM: string
+- node: RosNode
+- stateTransitionService: StateTransitionService
+--
++ tick(): void
+- stateTransition(): StateTransitionResponse</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>380</x><y>380</y><w>170</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>150;80;150;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>380</x><y>370</y><w>320</w><h>110</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>300;90;300;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>380</x><y>360</y><w>500</w><h>120</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>480;100;480;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>380</x><y>350</y><w>610</w><h>130</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>590;110;590;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>380</x><y>340</y><w>770</w><h>140</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>750;120;750;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>600</x><y>530</y><w>250</w><h>140</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>230;10;230;120;10;120</additional_attributes></element><element><id>Relation</id><coordinates><x>600</x><y>530</y><w>400</w><h>150</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>380;10;380;130;10;130</additional_attributes></element><element><id>Relation</id><coordinates><x>600</x><y>530</y><w>550</w><h>160</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>530;10;530;140;10;140</additional_attributes></element><element><id>UMLClass</id><coordinates><x>250</x><y>150</y><w>170</w><h>100</h></coordinates><panel_attributes>FSMNode
+--
+- activeState: String
+- node: RosNode
+--
+- update(): void
++ setState(state: State): bool</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>320</x><y>240</y><w>30</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;80</additional_attributes></element><element><id>UMLClass</id><coordinates><x>780</x><y>100</y><w>100</w><h>40</h></coordinates><panel_attributes>RosNode
+--
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>410</x><y>130</y><w>430</w><h>80</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;60;410;60;410;10</additional_attributes></element><element><id>Relation</id><coordinates><x>380</x><y>130</y><w>470</w><h>220</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;200;450;200;450;10</additional_attributes></element></diagram>
