@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 class Data:
     """A class to simplify the process of storing changes of a published topic."""
     def __init__(self,data):
@@ -9,3 +11,8 @@ class Data:
     
     def setData(self,data):
         self.__data = data
+
+@dataclass
+class ScanData:
+    distance: float
+    angle: float

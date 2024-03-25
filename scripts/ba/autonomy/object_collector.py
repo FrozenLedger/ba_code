@@ -11,14 +11,14 @@ from ba.utilities.transformations import quaternion_from_euler
 
 from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher,pickupInstructions,dropInstructions
 
-def move_to_point(pnt:Point):
+def move_to_point(pnt: Point):
     """Uses the 'move_base' Node to move to a specified point in the 'map frame' with the orientation set to (0,0,0,1) in quaternions.
 Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/"""
     #based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
-    client = actionlib.SimpleActionClient('move_base',MoveBaseAction)
+    client: actionlib.SimpleActionClient = actionlib.SimpleActionClient('move_base',MoveBaseAction)
     client.wait_for_server()
 
-    goal = MoveBaseGoal()
+    goal: MoveBaseGoal = MoveBaseGoal()
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
     
@@ -27,7 +27,7 @@ Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-clie
     goal.target_pose.pose.orientation.w = 1.0
 
     client.send_goal(goal)
-    wait = client.wait_for_result()
+    wait: bool = client.wait_for_result()
     if not wait:
         rospy.logerr("Action server not available!")
         rospy.signal_shutdown("Action server not available!")
@@ -37,9 +37,9 @@ Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-clie
 class ObjectCollector:
     """This node will controll the robot to fullfill the task of collecting objects that have been found in the area."""
     def __init__(self):
-        self.__rate = rospy.Rate(0.2) # update every 5s
-        self.__mover = RobotMover()
-        self.__robotarm = RobotarmPosePublisher()
+        self.__rate: rospy.Rate = rospy.Rate(0.2) # update every 5s
+        self.__mover: RobotMover = RobotMover()
+        self.__robotarm: RobotarmPosePublisher = RobotarmPosePublisher()
         self.__init_server_proxies()
 
         self.__substate = self.__look_for_object

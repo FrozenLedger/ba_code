@@ -14,12 +14,12 @@ def manual_pose_publisher():
 
     while not rospy.is_shutdown():
         try:
-            angles_input = input("Enter joint angles separated by spaces(in degrees): ")
-            angles_list = [radians(float(angle)) for angle in angles_input.split()]
+            angles_input: str = input("Enter joint angles separated by spaces(in degrees): ")
+            angles_list: list[float] = [radians(float(angle)) for angle in angles_input.split()]
             
-            gripper_input = float(input("Enter gripper command (1 for open, 0 for close): "))
+            gripper_input: float = float(input("Enter gripper command (1 for open, 0 for close): "))
 
-            joint_angles_msg = JointAngles()
+            joint_angles_msg: JointAngles = JointAngles()
             joint_angles_msg.angles = angles_list
             joint_angles_msg.gripper_command = gripper_input
 
@@ -29,13 +29,14 @@ def manual_pose_publisher():
 
 class RobotarmPosePublisher:
     """A class to control the angles of the joints of the robot arm, based on the 'move_to_pose_package by Mouheb Khairallah'."""
-    def __init__(self,init_node=False,delay=0):
+    def __init__(self,init_node: bool=False,delay: float=0):
         if init_node:
             self.__node = rospy.init_node('pose_publisher',anonymous=True)
         self.__publisher = rospy.Publisher('joint_angles_topic', JointAngles, queue_size=10)
         self.__delay = delay
 
-    def publish_unsafe(self,instructions):
+    def publish_unsafe(self,instructions: list[float]):
+        """Takes a list of float values."""
         print("Instructions in degrees:",instructions)
         for inst in instructions:
             if rospy.is_shutdown():
@@ -53,7 +54,7 @@ class RobotarmPosePublisher:
             joint_angles_msg.gripper_command = float(gripper_command) #gripper_input
             self.__publisher.publish(joint_angles_msg)
 
-    def publish(self,instructions):
+    def publish(self,instructions: list[float]):
         print("Instructions in degrees:",instructions)
         for inst in instructions:
             if rospy.is_shutdown():

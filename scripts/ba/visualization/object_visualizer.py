@@ -48,7 +48,7 @@ class ObjectVisualizer:
             #print(pnt.point)
             marker.scale.x = 0.05
             marker.scale.y = 0.05
-            marker.scale.z = 0.05
+            marker.scale.z = 1.50
             lbl.scale.x = 0.05
             lbl.scale.y = 0.05
             lbl.scale.z = 0.05

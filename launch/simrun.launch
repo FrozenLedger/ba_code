@@ -1,0 +1,33 @@
+<launch>
+    <!-- Navigation Nodes -->
+    <include file="$(find amcl)/examples/amcl_diff.launch" />
+    <!-- remap from="/map" to="/slam_toolbox/dynamic_map" / -->
+    <!-- remap from="/cmd_vel" to="/cmd_vel_nav" / -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+        <rosparam file="$(find ba_code)/param/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+        <rosparam file="$(find ba_code)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="$(find ba_code)/param/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find ba_code)/param/global_costmap_params.yaml" command="load" /> 
+        <rosparam file="$(find ba_code)/param/base_local_planner_params.yaml" command="load" />
+    </node>
+
+    <!-- Mapping and Localization Nodes -->
+    <remap from="/slam_toolbox/dynamic_map" to="/map"/>
+    <node pkg="slam_toolbox" type="async_slam_toolbox_node" name="slam_toolbox" output="screen">
+        <rosparam command="load" file="$(find ba_code)/param/mapper_params_online_async.yaml" />
+    </node>
+
+    <!-- Autonomy Nodes -->
+    <node pkg="ba_code" type="wall_follower.py" name="wall_follower" output="screen"></node>
+
+    <!-- Objectverankerungs Nodes -->
+    <node pkg="ba_code" name="object_tracker" type="object_tracker.py" output="screen" />
+
+    <!-- Visualization Nodes -->
+    <node pkg="ba_code" type="lidar_visualizer.py" name="lidar_visualizer" output="screen"></node>
+    <node pkg="ba_code" type="object_visualizer.py" name="object_visualizer" output="screen"></node>
+
+    <!-- Simulation Nodes -->
+    <node pkg="ba_code" type="object_spawner.py" name="object_spawner" output="screen"></node>
+
+</launch>
