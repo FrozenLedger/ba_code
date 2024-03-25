@@ -1,6 +1,6 @@
 import ba.autonomy.routines as routines
 
-import rospy
+import rospy, threading
 
 from std_srvs.srv import Trigger,TriggerResponse, TriggerRequest
 
@@ -13,31 +13,39 @@ Rate = rospy.Rate
 class StateMachine:
     """A first conecpt of a state machine, that controls the autonomous behaviour of the robot."""
     def __init__(self):
-        self.__active_state: State = routines.ChargeBatteryRoutine(self)
-        self.__shutdown_signal_server: Service = rospy.Service("/state_machine/shutdown",Trigger,self.__shutdown_signal_received)
-        self.__battery_low_signal_server: Service = rospy.Service("/state_machine/battery_low",Trigger,self.__battery_low_signal_received)
+        self._active_state: State = routines.ChargeBatteryRoutine(self)
+        self._shutdown_signal_server: Service = rospy.Service("/state_machine/shutdown",Trigger,self._shutdown_signal_received)
+        self._battery_low_signal_server: Service = rospy.Service("/state_machine/battery_low",Trigger,self._battery_low_signal_received)
+        self._lock = threading.Lock()
         print("State Machine running.")
 
-    def __set_active_state(self,new_state: State):
+    def _set_active_state(self,new_state: State):
         try:
-            self.__active_state = new_state
+            self._lock.acquire()
+            print("Lock acquired.")
+            self._active_state = new_state
             return TriggerResponse(success=True,message="SUCCESS")
         except Exception as e:
             print(e)
             return TriggerResponse(success=False,message="FAILED")
+        finally:
+            print("Lock released.")
+            self._lock.release()
 
-    def __battery_low_signal_received(self,request: TriggerRequest):
-        return self.__set_active_state( routines.ChargeBatteryRoutine(self) )
+    def _battery_low_signal_received(self,request: TriggerRequest):
+        return self._set_active_state( routines.ChargeBatteryRoutine(self) )
     
-    def __shutdown_signal_received(self,request: TriggerRequest):
-        return self.__set_active_state( routines.ShutdownRoutine(self) )
+    def _shutdown_signal_received(self,request: TriggerRequest):
+        return self._set_active_state( routines.ShutdownRoutine(self) )
     
     def update(self):
         """Executes the behaviour of the active state. The execute methode of the state is expected to return itself or a different state if a state transition is performed.
         Further development:
             * implementation of a 'on_state_enter' method, that will be triggered when a state is entered during a state transition.
             * implementation of a 'on_state_exit' method, that will be triggered when a state is exited during a state transition."""
-        self.__active_state: State = self.__active_state.execute()
+        self._lock.acquire()
+        self._active_state: State = self._active_state.execute()
+        self._lock.release()
 
 def main():
     """Creates an object of the state machine and runs the update method in a loop to process the states and enable state transitions.
