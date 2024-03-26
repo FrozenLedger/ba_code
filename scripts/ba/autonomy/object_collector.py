@@ -91,7 +91,7 @@ class ObjectCollector:
             actionstate = self.__mover.get_actionclient().get_state()
             print(f"move_base ActionState: {actionstate}")
 
-            if actionstate is 1:
+            if actionstate == 1:
                 print("Waiting for robot to reach goal...")
                 return True
             elif actionstate in [0,9]:

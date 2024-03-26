@@ -20,8 +20,8 @@ class PosePath:
 
 class PathExplorer:
     def __init__(self, robot: RobotMover, path: PosePath):
-        self._robot = RobotMover()
-        self._path = PosePath()
+        self._robot = robot
+        self._path = path
 
     def explore(self):
         self._robot.move_to_pose(next(self._path))

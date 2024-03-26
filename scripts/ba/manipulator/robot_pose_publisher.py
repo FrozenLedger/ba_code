@@ -35,7 +35,7 @@ class RobotarmPosePublisher:
         self.__publisher = rospy.Publisher('joint_angles_topic', JointAngles, queue_size=10)
         self.__delay = delay
 
-    def publish_unsafe(self,instructions: list[float]):
+    def publish_unsafe(self,instructions):
         """Takes a list of float values."""
         print("Instructions in degrees:",instructions)
         for inst in instructions:
@@ -54,7 +54,7 @@ class RobotarmPosePublisher:
             joint_angles_msg.gripper_command = float(gripper_command) #gripper_input
             self.__publisher.publish(joint_angles_msg)
 
-    def publish(self,instructions: list[float]):
+    def publish(self,instructions):
         print("Instructions in degrees:",instructions)
         for inst in instructions:
             if rospy.is_shutdown():

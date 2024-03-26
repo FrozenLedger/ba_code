@@ -4,8 +4,10 @@ from dataclasses import dataclass
 
 from ba.navigation.path_explorer import Pose
 from geometry_msgs.msg import Pose as ROSPose
+from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
+from std_msgs.msg import Header
 
 @dataclass
 class Position:
@@ -33,6 +35,12 @@ def convert_to_ros_pose(pose: Pose):
         position=Point(x=pos.x,y=pos.y,z=pos.z),
         orientation=Quaternion(x=orient.x,y=orient.y,z=orient.z,w=orient.w)
     )
+
+def convert_to_ros_posestamped(pose: Pose,frame_id: str):
+    pose = convert_to_ros_pose(pose)
+    header = Header(frame_id=frame_id,stamp=rospy.Time.now())
+
+    return PoseStamped(header=header,pose=pose)
 
 if __name__ == "__main__":
     rospy.init_node("testnode")

@@ -15,6 +15,7 @@ from ba.navigation.path_explorer import PathExplorer
 
 from ba.navigation.path_explorer import PosePath
 from ba.utilities.datatypes import Pose, Position, Orientation
+from ba.utilities.ros_conversions import convert_to_ros_posestamped
 
 import numpy as np
 
@@ -68,8 +69,9 @@ class ExploreRegionRoutine(IRoutine):
         #self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
         
         points = [(0.5,0.5),(0.5,-0.5),(-0.5,-0.5),(-0.5,0.5)]
-        posepath = PosePath([Pose(position=Position(x=x,y=y,z=0),
-                          orientation=Orientation()) for x,y in points])
+        poses = [convert_to_ros_posestamped(Pose(position=Position(x=x,y=y,z=0),
+                          orientation=Orientation()),"map") for x,y in points]
+        posepath = PosePath(poses=poses)
 
         self.__explorer = PathExplorer(robot=RobotMover(),path=posepath)
         
