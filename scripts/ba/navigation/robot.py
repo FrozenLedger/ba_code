@@ -1,6 +1,6 @@
 import rospy,tf,math,actionlib
 
-from geometry_msgs.msg import PoseStamped, Pose,PointStamped
+from geometry_msgs.msg import PoseStamped, Pose, PointStamped
 
 from ba.utilities.transformations import quaternion_from_euler
 
@@ -37,7 +37,7 @@ class RobotMover:
         ps = self.__transform(pose)
         self.move_to_pose(ps)
 
-    def move_to_pose(self,pose):
+    def move_to_pose(self,pose: Pose):
         self.__move_base_client.wait_for_server()
 
         goal = MoveBaseGoal()

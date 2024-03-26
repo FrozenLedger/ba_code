@@ -10,7 +10,11 @@ from std_srvs.srv import SetBool
 from ba.utilities.data import Data
 from ba.autonomy.object_collector import ObjectCollector
 from ba_code.srv import GetObjectList
-from ba.navigation.quadtree_explorer import QuadtreeExplorer
+#from ba.navigation.quadtree_explorer import QuadtreeExplorer
+from ba.navigation.path_explorer import PathExplorer
+
+from ba.navigation.path_explorer import PosePath
+from ba.utilities.datatypes import Pose, Position, Orientation
 
 import numpy as np
 
@@ -61,7 +65,13 @@ class ExploreRegionRoutine(IRoutine):
     def __init__(self, FSM):
         super().__init__(FSM)
         #self.__wall_follower_client = rospy.ServiceProxy("/wall_follower/enable",SetBool)
-        self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
+        #self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
+        
+        points = [(0.5,0.5),(0.5,-0.5),(-0.5,-0.5),(-0.5,0.5)]
+        posepath = PosePath([Pose(position=Position(x=x,y=y,z=0),
+                          orientation=Orientation()) for x,y in points])
+
+        self.__explorer = PathExplorer(robot=RobotMover(),path=posepath)
         
         self.__object_tracker_request = rospy.ServiceProxy("/object_tracker/list",GetObjectList)
 
