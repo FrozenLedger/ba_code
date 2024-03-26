@@ -1,5 +1,9 @@
 <launch>
     <!-- launches the lidar and robotarm nodes-->
-    <include file="$(find ldlidar_stl_ros)/launch/ld19.launch"/>
-    <include file="$(find move_to_pose_package)/launch/joint_trajectory_controller.launch"/>
+    <include file="$(find ldlidar_stl_ros)/launch/ld19.launch">
+        <arg name="port_name" value="/dev/ttyUSB0" />
+    </include>
+    <include file="$(find move_to_pose_package)/launch/joint_trajectory_controller.launch">
+        <arg name="usb_port" value="/dev/ttyUSB1" />
+    </include>
 </launch>
