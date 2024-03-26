@@ -16,7 +16,6 @@ rosrun tf static_transform_publisher 0.12 0 -0.07 1.5708 0 1.5708 base_link worl
 ## Jetson startup commands
 cd /Documents/github/catkin_ba/
 source devel/setup.bash
-roslaunch ldlidar ld19.launch
 roslaunch ba_code jetson.launch
 
 # RPi4
@@ -29,7 +28,7 @@ roslaunch ba_code jetson.launch
 * communication flow: USB -> TTL -> U2D2 -> robotarm
 
 ## RPi4 startup commands
-roslaunch ba_code joint_trajectory_controller.launch
+roslaunch ba_code raspi.launch
 
 ### The problem with multiple robot descriptions in ROS1
 https://answers.ros.org/question/318086/using-two-robots-two-robot_description-in-ros/
