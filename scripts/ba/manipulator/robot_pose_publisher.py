@@ -29,7 +29,7 @@ def manual_pose_publisher():
 
 class RobotarmPosePublisher:
     """A class to control the angles of the joints of the robot arm, based on the 'move_to_pose_package by Mouheb Khairallah'."""
-    def __init__(self,init_node: bool=False,delay: float=0):
+    def __init__(self,init_node: bool=False,delay: float=3):
         if init_node:
             self.__node = rospy.init_node('pose_publisher',anonymous=True)
         self.__publisher = rospy.Publisher('joint_angles_topic', JointAngles, queue_size=10)
