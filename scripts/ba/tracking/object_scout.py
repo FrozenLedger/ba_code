@@ -3,11 +3,16 @@ import rospy
 import ba_code.srv as basrv
 import ba_code.msg as bamsg
 
+from sensor_msgs.msg import RegionOfInterest
+
 import cv2
+
+def roi_filter(roi: RegionOfInterest, max_width: float = 100, max_height: float = 100):
+    return roi.width <= max_width and roi.height <= max_height
 
 class ObjectScout:
     """A server node that takes an image of a scene and processes the data to detect objects and trash in the scene."""
-    def __init__(self):
+    def __init__(self, roi_filter: callable = roi_filter):
         self.__snapshot_req = rospy.ServiceProxy("/rs_d435/take_snapshot",basrv.TakeSnapshotStamped)
         self.__clear_frame_req = rospy.ServiceProxy("/rs_d435/frames/clear",basrv.ClearFrame)
         self.__detect_req = rospy.ServiceProxy("/yolov5/detect",basrv.Detect)
@@ -15,6 +20,8 @@ class ObjectScout:
         self.__pixel_to_point3d_req = rospy.ServiceProxy("/rs_d435/frames/deproject_pixel_to_point3d",basrv.PixelToPoint3D)
         self.__add_object_req = rospy.ServiceProxy("/object_tracker/add",basrv.AddObject)
         self.__rate = rospy.Rate(0.5)
+
+        self._roi_filter = roi_filter
 
     def look_around(self,save_im=False):
         snap_resp = self.__snapshot_req(add_buffer=True)
@@ -31,6 +38,10 @@ class ObjectScout:
                 detection = det_resp.detection
                 for idx in range(len(detection.clsID)):
                     roi = detection.roi[idx]
+
+                    if not self._roi_filter(roi):
+                        continue
+
                     clsID = detection.clsID[idx]
                     conf = detection.confidence[idx]
                     metrics = detection.metrics[idx]
