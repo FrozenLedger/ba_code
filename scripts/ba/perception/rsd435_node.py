@@ -14,6 +14,12 @@ import ba_code.srv as basrv
 from pathlib import Path
 import numpy as np
 
+SNAPSHOT_TOPIC_SUFFIX = "/take_snapshot"
+FRAMES_PREFIX = "/frames"
+STREAM_ENABLE_SUFFIX = "/stream_enable"
+COLOR_PREFIX = "/color"
+DEPTH_PREFIX = "/depth"
+IMAGE_SUFFIX = "/image"
 class RealSenseD435Server:
     """A server node that exposes a limited set of camera functionalities to the ros network."""
     # Camera link: camera_link
@@ -39,6 +45,10 @@ class RealSenseD435Server:
         self.__init_publisher()
 
         self.__loop()
+
+    @property
+    def NAME_PREFIX(self):
+        return "/rsd435"
 
     def __loop(self):
         running = True
@@ -73,19 +83,19 @@ class RealSenseD435Server:
             self.__framerate.sleep()
 
     def __init_services(self):
-        self.__snapshot_server = rospy.Service("/rs_d435/take_snapshot",basrv.TakeSnapshotStamped,self.__take_snapshot)
-        self.__stream_enabler = rospy.Service("/rs_d435/stream_enable",SetBool,self.__enable_stream)
+        self.__snapshot_server = rospy.Service(self.NAME_PREFIX + SNAPSHOT_TOPIC_SUFFIX,basrv.TakeSnapshotStamped,self.__take_snapshot)
+        self.__stream_enabler = rospy.Service(self.NAME_PREFIX + STREAM_ENABLE_SUFFIX,SetBool,self.__enable_stream)
         #self.__distance_server = rospy.Service("rs_d435/get_distance",basrv.GetDistance,self.__get_distance)
-        self.__clear_frame_server = rospy.Service("/rs_d435/frames/clear",basrv.ClearFrame,self.__clear_frame_request)
-        self.__color_crame_server = rospy.Service("rs_d435/frames/color",basrv.SendImage,self.__send_color)
-        self.__depth_frame_server = rospy.Service("/rs_d435/frames/depthim",basrv.SendImage,self.__send_depthim)
-        self.__pixel_to_point3d_server = rospy.Service("/rs_d435/frames/deproject_pixel_to_point3d",basrv.PixelToPoint3D,self.__deproject_pixel_to_point3d)
-        self.__get_distance_metrics_server = rospy.Service("/rs_d435/frames/metrics",basrv.GetMetrics,self.__distance_metrics_from_area)
+        self.__clear_frame_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/clear",basrv.ClearFrame,self.__clear_frame_request)
+        self.__color_crame_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/color",basrv.SendImage,self.__send_color)
+        self.__depth_frame_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/depthim",basrv.SendImage,self.__send_depthim)
+        self.__pixel_to_point3d_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/deproject_pixel_to_point3d",basrv.PixelToPoint3D,self.__deproject_pixel_to_point3d)
+        self.__get_distance_metrics_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/metrics",basrv.GetMetrics,self.__distance_metrics_from_area)
         #self.__get_distance_metrics_server = rospy.Service("/rs_d435/get_distance_metrics",basrv.GetMetrics,self.__distance_metrics_from_area)
 
     def __init_publisher(self):
-        self.__color_pub = rospy.Publisher("/rs_d435/color/image",Image,queue_size=1)
-        self.__depth_pub = rospy.Publisher("/rs_d435/depth/image",Image,queue_size=1)
+        self.__color_pub = rospy.Publisher(self.NAME_PREFIX + COLOR_PREFIX + IMAGE_SUFFIX,Image,queue_size=1)
+        self.__depth_pub = rospy.Publisher(self.NAME_PREFIX + DEPTH_PREFIX + IMAGE_SUFFIX,Image,queue_size=1)
         #self.__deptharr_pub = rospy.Publisher("/rs_d435/depth/data",PointCloud2,queue_size=1)
         
     def __enable_stream(self,request):
