@@ -1,0 +1,70 @@
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><element><id>UMLClass</id><coordinates><x>90</x><y>120</y><w>270</w><h>550</h></coordinates><panel_attributes>RealSenseD435Server
+--
+- camera: RealSenseD435
+- frame_id: int
+- outpath: str
+- stream_enable: bool
+- framerate: rospy.Rate
+- idle: bool
+- cvbridge: CvBridge
+- buffer: dictionary
+- max_buffer_size: int
+- buffer_count: int
+- color_pub: rospy.Publisher
+- depth_pub: rospy.Publisher
+- snapshot_server: rospy.Service
+- stream_enabler: rospy.Service
+- clear_frame_server: rospy.Service
+- color_frame_server: rospy.Service
+- depth_frame_server: rospy.Service
+- pixel_to_point3d_server: rospy.Service
+- get_distance_metrics_server: rospy.Service
+--
++ get_distance(area: ROI, px: int, py: int, size: int)
+- loop():
+- publish():
+- init_services():
+- init_publisher():
+- enable_stream( request ): response
+- send_color( request ): response
+- send_depthim( request ): response
+- send_image_response( img: np.array, roi: ROI ): repsonse
+- take_snapshot( request ): response
+- add_frames( frame_buffer: FrameBuffer, imgID: int ):
+- clear_frame_request( request ): response
+- remove_frames( imgID: int ): bool
+- deproject_pixel_to_point3d( request ): response
+- distance_metrics_from_area( request ): response</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>680</x><y>60</y><w>340</w><h>250</h></coordinates><panel_attributes>FrameBuffer
+--
+- aligned_frames: ???
+- imgs: dictionary
+- header: std_msgs.msg/Header
++ colorim: np.array
++ depthim: np.array
++ depth_data: np.array
++ aligned_depth_frame: ???
++ aligned_color_frame: ???
++ intrinsics: ???
++ FOV: ???
+--
+- get_img( key: str, frame: ??? ): np.array
++ get_distance( px: int, py: int ): float
++ pixel_to_point3D( px: int, py: int ): tuple(float, float, float)
++ get_distance_metrics( roi: ROI ): Metrics</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>690</x><y>500</y><w>310</w><h>240</h></coordinates><panel_attributes>RealSenseD435
+--
++ WIDTH: int {readOnly}
++ HEIGHT: int {readOnly}
++ FORMAT: rs.format {readOnly}
++ delay: float
+- pipeline: rs.pipeline
+- config: rs.config
+- running: bool
+- pipeline_profile: rs.pipeline_wrapper
+- device: str
+- delay_amount: float
+- alignment: rs.align
+--
++ start_pipeline()
++ stop_pipeline()
++ take_snapshot( header: ROSHeader ): FrameBuffer</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>820</x><y>300</y><w>150</w><h>220</h></coordinates><panel_attributes>&lt; take_snapshot() &gt;</panel_attributes><additional_attributes>10;10;10;200</additional_attributes></element><element><id>Relation</id><coordinates><x>350</x><y>140</y><w>360</w><h>470</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-
+</panel_attributes><additional_attributes>10;10;180;10;180;450;340;450</additional_attributes></element></diagram>
