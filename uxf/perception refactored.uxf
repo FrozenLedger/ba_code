@@ -1,4 +1,4 @@
-<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><element><id>UMLClass</id><coordinates><x>740</x><y>590</y><w>270</w><h>380</h></coordinates><panel_attributes>RealSenseD435Server
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><element><id>UMLClass</id><coordinates><x>740</x><y>350</y><w>270</w><h>380</h></coordinates><panel_attributes>RealSenseD435Server
 --
 - camera: ACamera
 - ros_server: ROSCameraServer
@@ -15,22 +15,11 @@
 - init_services():
 - send_image_response( img: np.array, roi: ROI ): repsonse
 - add_frames( frame_buffer: FrameBuffer, imgID: int ):
-- remove_frames( imgID: int ): bool</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1220</x><y>530</y><w>340</w><h>250</h></coordinates><panel_attributes>/AFrameBuffer/
---
-+ colorim: ColorImage {readOnly}
-+ depthim: DepthImage {readOnly}
-+ vertical_FOV: float
-+ horizontal_FOV: float
---
-- get_img( key: str, frame: ??? ): np.array
-+ get_distance( px: int, py: int ): float
-+ pixel_to_point3D( px: int, py: int ): tuple(float, float, float)
-+ get_distance_metrics( roi: ROI ): Metrics
-+ get_depthim(): DepthImage
-+ get_colorimg(): ColorImage</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1190</x><y>1190</y><w>310</w><h>240</h></coordinates><panel_attributes>RealSenseD435
+- remove_frames( imgID: int ): bool</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1190</x><y>950</y><w>310</w><h>240</h></coordinates><panel_attributes>RealSenseD435
 --
 + FORMAT: rs.format {readOnly}
 + delay: float
++ intrinsics: ???
 - header: std_msgs.msg/Header
 - pipeline: rs.pipeline
 - config: rs.config
@@ -42,42 +31,34 @@
 --
 + start_pipeline()
 + stop_pipeline()
-+ take_snapshot( header: ROSHeader ): FrameBuffer</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1360</x><y>770</y><w>90</w><h>250</h></coordinates><panel_attributes>&lt;&lt; creates &gt;&gt;</panel_attributes><additional_attributes>10;10;10;230</additional_attributes></element><element><id>Relation</id><coordinates><x>1000</x><y>610</y><w>210</w><h>470</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-
-</panel_attributes><additional_attributes>10;10;70;10;70;450;190;450</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1190</x><y>1000</y><w>310</w><h>130</h></coordinates><panel_attributes>/ACamera/
++ deproject_pixel_to_point( px: int, py: int ): Point3D</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1000</x><y>370</y><w>210</w><h>420</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-
+</panel_attributes><additional_attributes>10;10;70;10;70;400;190;400</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1190</x><y>710</y><w>310</w><h>180</h></coordinates><panel_attributes>/ADepthCamera/
 --
 + WIDTH: int {readOnly}
 + HEIGHT: int {readOnly}
++ vertical_FOV: float
++ horizontal_FOV: float
++ depth_imager: ADepthImager {readOnly}
++ color_imager: AColorImager {readOnly}
 --
 + start()
 + stop()
-+ restart()
-+ take_snapshot(): AFrameBuffer</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1330</x><y>1120</y><w>30</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;70</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1150</x><y>270</y><w>210</w><h>110</h></coordinates><panel_attributes>DepthImage
++ deproject_pixel_to_point3d( px: int, py: int ): Point3D
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1330</x><y>880</y><w>30</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;70</additional_attributes></element><element><id>UMLPackage</id><coordinates><x>2000</x><y>950</y><w>210</w><h>70</h></coordinates><panel_attributes>std_msgs.msg
 --
-+ image: np.array {readOnly}
-+ depth_data: np.array {readOnly}
+bg=orange</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2010</x><y>980</y><w>140</w><h>30</h></coordinates><panel_attributes>Header</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1490</x><y>980</y><w>540</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;520;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1590</x><y>1090</y><w>400</w><h>170</h></coordinates><panel_attributes>FrameAligner
 --
-+ get_distance( px: int, py: int ): float</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1380</x><y>270</y><w>170</w><h>110</h></coordinates><panel_attributes>ColorImage
+&lt;&lt;properties&gt;&gt;
++ aligned_depth_frame: RSFrame {readOnly}
++ aligned_color_frame: RSFrame {readOnly}
++ aligned_frames: RSFrames {readOnly}
 --
-+ image: np.array {readOnly}
---</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1350</x><y>0</y><w>170</w><h>100</h></coordinates><panel_attributes>/Image/
---
-+ image: np.array {readOnly}
---</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1270</x><y>90</y><w>150</w><h>200</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>130;10;130;90;10;90;10;180</additional_attributes></element><element><id>Relation</id><coordinates><x>1390</x><y>90</y><w>60</w><h>200</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;90;40;90;40;180</additional_attributes></element><element><id>UMLClass</id><coordinates><x>930</x><y>170</y><w>210</w><h>60</h></coordinates><panel_attributes>&lt;&lt;interface&gt;&gt;
-/PixelDepth/
---
-+ get_distance( px: int, py: int ): float</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1130</x><y>180</y><w>120</w><h>110</h></coordinates><panel_attributes>lt=&lt;&lt;.</panel_attributes><additional_attributes>10;10;100;10;100;90</additional_attributes></element><element><id>Relation</id><coordinates><x>1280</x><y>370</y><w>30</w><h>180</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;160;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>1410</x><y>370</y><w>30</w><h>180</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;160;10;10</additional_attributes></element><element><id>UMLPackage</id><coordinates><x>1780</x><y>1190</y><w>210</w><h>70</h></coordinates><panel_attributes>std_msgs.msg
---
-bg=orange</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1790</x><y>1220</y><w>140</w><h>30</h></coordinates><panel_attributes>Header</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1490</x><y>1220</y><w>320</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;300;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1780</x><y>710</y><w>180</w><h>130</h></coordinates><panel_attributes>RealSenseD435FrameBuffer
---
-+ intrinsics: ???
-+ aligned_depth_frame: ???
-+ aligned_color_frame: ???
-- aligned_frames: ???
---
+
+&lt;&lt;methods&gt;&gt;
 + get_depthim(): DepthImage
-+ get_colorimg(): ColorImage</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1550</x><y>660</y><w>320</w><h>70</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;300;10;300;50</additional_attributes></element><element><id>Relation</id><coordinates><x>170</x><y>580</y><w>380</w><h>60</h></coordinates><panel_attributes>&lt; init_services()
++ get_colorimg(): ColorImage</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>170</x><y>340</y><w>380</w><h>60</h></coordinates><panel_attributes>&lt; init_services()
 /clear_frames
-/remove_frames</panel_attributes><additional_attributes>10;20;360;20</additional_attributes></element><element><id>UMLPackage</id><coordinates><x>0</x><y>570</y><w>180</w><h>170</h></coordinates><panel_attributes>ros services
+/remove_frames</panel_attributes><additional_attributes>10;20;360;20</additional_attributes></element><element><id>UMLPackage</id><coordinates><x>0</x><y>330</y><w>180</w><h>170</h></coordinates><panel_attributes>ros services
 --
 bg=orange
 /take_snapshot
@@ -87,42 +68,71 @@ bg=orange
 /clear_frames
 /remove_frames
 /deproject_pixel_to_point3d
-/distance_metrics_from_area</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>770</x><y>350</y><w>160</w><h>80</h></coordinates><panel_attributes>Frame
+/distance_metrics_from_area</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>770</x><y>110</y><w>160</w><h>80</h></coordinates><panel_attributes>Frame
 --
 + frame_id: str {readOnly}
---</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>780</x><y>420</y><w>30</w><h>190</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;170;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>600</x><y>400</y><w>150</w><h>80</h></coordinates><panel_attributes>ImageWriter
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>780</x><y>180</y><w>30</w><h>190</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;170;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>600</x><y>160</y><w>150</w><h>80</h></coordinates><panel_attributes>ImageWriter
 --
 + outpath: str {readOnly}
 --
-+ save()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>740</x><y>440</y><w>50</w><h>170</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>30;150;30;10;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>490</x><y>930</y><w>160</w><h>90</h></coordinates><panel_attributes>ImageStreamer
++ save()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>740</x><y>200</y><w>50</w><h>170</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>30;150;30;10;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>490</x><y>690</y><w>160</w><h>90</h></coordinates><panel_attributes>ImageStreamer
 --
-+ camera: {readOnly}
-- enabled: {readOnly}
+- IImager: imager
+- enabled: bool
 --
-- set_enable(enable: bool)
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>950</x><y>350</y><w>140</w><h>140</h></coordinates><panel_attributes>BufferManager
++ enable()
++ disable()</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>950</x><y>110</y><w>140</w><h>140</h></coordinates><panel_attributes>BufferManager
 --
 - buffer: dictionary
 - max_buffer_size: int
 - buffer_count: int
---</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>190</x><y>750</y><w>180</w><h>170</h></coordinates><panel_attributes>ros topics
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>190</x><y>510</y><w>180</w><h>170</h></coordinates><panel_attributes>ros topics
 --
 bg=green
 /colorim
-/depthim</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>360</x><y>770</y><w>130</w><h>60</h></coordinates><panel_attributes>&lt; init_publisher()
-/colorim
-/depthim</panel_attributes><additional_attributes>10;20;110;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>530</x><y>590</y><w>120</w><h>120</h></coordinates><panel_attributes>ROSCameraServer
+/depthim</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>360</x><y>530</y><w>130</w><h>50</h></coordinates><panel_attributes>&lt; init_publisher()
+{ prefix }/image</panel_attributes><additional_attributes>10;20;110;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>530</x><y>350</y><w>120</w><h>120</h></coordinates><panel_attributes>ROSCameraServer
 --
---</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>640</x><y>610</y><w>120</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>100;10;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>470</x><y>770</y><w>210</w><h>80</h></coordinates><panel_attributes>ROSImageStreamer
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>640</x><y>370</y><w>120</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>100;10;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>470</x><y>530</y><w>210</w><h>80</h></coordinates><panel_attributes>ROSImagePublisher
 --
 - image_Streamer: ImageStreamer
+- prefix: str
 --
-- init_publisher()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>620</x><y>840</y><w>30</w><h>110</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;90;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>640</x><y>630</y><w>120</w><h>350</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>100;10;60;10;60;330;10;330</additional_attributes></element><element><id>UMLClass</id><coordinates><x>810</x><y>1060</y><w>150</w><h>110</h></coordinates><panel_attributes>ROSSnapshotWrapper
+- init_publisher()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>620</x><y>600</y><w>30</w><h>110</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;90;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>640</x><y>390</y><w>120</w><h>350</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>100;10;60;10;60;330;10;330</additional_attributes></element><element><id>UMLClass</id><coordinates><x>810</x><y>820</y><w>150</w><h>110</h></coordinates><panel_attributes>ROSSnapshotWrapper
 --
 - ACamera: camera
 --
-- init_services()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>950</x><y>1090</y><w>260</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;240;10</additional_attributes></element><element><id>Relation</id><coordinates><x>120</x><y>730</y><w>710</w><h>430</h></coordinates><panel_attributes>&lt; init_services()
+- init_services()</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>950</x><y>800</y><w>260</w><h>80</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;60;130;60;130;10;240;10</additional_attributes></element><element><id>Relation</id><coordinates><x>120</x><y>490</y><w>710</w><h>430</h></coordinates><panel_attributes>&lt; init_services()
 /take_snapshot
 /send_color
-/send_depthim</panel_attributes><additional_attributes>10;10;10;370;690;370</additional_attributes></element><element><id>Relation</id><coordinates><x>170</x><y>710</y><w>410</w><h>80</h></coordinates><panel_attributes>&lt; init_services()
-/enable_stream</panel_attributes><additional_attributes>10;20;390;20;390;60</additional_attributes></element><element><id>Relation</id><coordinates><x>960</x><y>480</y><w>30</w><h>130</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;110;10;10</additional_attributes></element></diagram>
+/send_depthim</panel_attributes><additional_attributes>10;10;10;370;690;370</additional_attributes></element><element><id>Relation</id><coordinates><x>170</x><y>470</y><w>410</w><h>80</h></coordinates><panel_attributes>&lt; init_services()
+{ prefix }/enable
+{ prefix }/disable</panel_attributes><additional_attributes>10;20;390;20;390;60</additional_attributes></element><element><id>Relation</id><coordinates><x>960</x><y>240</y><w>30</w><h>130</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;110;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>2010</x><y>830</y><w>100</w><h>100</h></coordinates><panel_attributes>&lt;&lt;dataclass&gt;&gt;
+Point3D
+--
+&lt;&lt;properties&gt;&gt;
+x: float
+y: float
+z: float</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1920</x><y>840</y><w>110</w><h>40</h></coordinates><panel_attributes>uses &gt;</panel_attributes><additional_attributes>10;20;90;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1900</x><y>740</y><w>160</w><h>60</h></coordinates><panel_attributes>&lt;&lt;interface&gt;&gt;
+/IImager/
+--
+--
++ take_snapshot()</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1620</x><y>830</y><w>310</w><h>80</h></coordinates><panel_attributes>&lt;&lt;interface&gt;&gt;
+/IDepthProjector/
+--
+--
++ deproject_pixel_to_point3D( px: int, py: int ): Point3D</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1490</x><y>840</y><w>150</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>130;10;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1620</x><y>650</y><w>180</w><h>80</h></coordinates><panel_attributes>/AColorImager/
+--
++ colorim: np.array {readOnly}
+--
++ take_snapshot()
++ get_image(): np.array</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1620</x><y>740</y><w>180</w><h>80</h></coordinates><panel_attributes>/ADepthImager/
+--
++ depthim: np.array {readOnly}
+--
++ take_snapshot()
++ get_image: np.array</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1790</x><y>670</y><w>130</w><h>110</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>110;90;30;90;30;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>1790</x><y>750</y><w>130</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>110;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>1490</x><y>670</y><w>150</w><h>100</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;80;80;80;80;10;130;10</additional_attributes></element><element><id>Relation</id><coordinates><x>1490</x><y>760</y><w>150</w><h>30</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes><additional_attributes>10;10;130;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1900</x><y>670</y><w>160</w><h>60</h></coordinates><panel_attributes>&lt;&lt;interface&gt;&gt;
+/IImageContainer/
+--
+--
+get_image(): np.array</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1790</x><y>660</y><w>130</w><h>50</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>110;30;40;30;40;10;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>1790</x><y>680</y><w>130</w><h>110</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>110;10;40;10;40;90;10;90</additional_attributes></element></diagram>
