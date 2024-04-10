@@ -37,3 +37,9 @@ https://answers.ros.org/question/318086/using-two-robots-two-robot_description-i
 ### The jetson launch file was edited:
 static transform from base_link to world
 static transform from base_footprint to base_link
+
+### clock synchronization:
+use the /clock topic: http://wiki.ros.org/Clock
+--- or ---
+synchronize using chrony: http://wiki.ros.org/ROS/NetworkSetup
+
