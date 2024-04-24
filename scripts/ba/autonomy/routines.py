@@ -69,6 +69,14 @@ class ExploreRegionRoutine(IRoutine):
         #self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
         
         points = [(0.5,0.5),(0.5,-0.5),(-0.5,-0.5),(-0.5,0.5)]
+        try:
+            origin = rospy.get_param("/path_explorer/origin")
+            x = origin["x"]
+            y = origin["y"]
+        except KeyError as e:
+            print(e)
+            x = y = 0
+        points = [(px+x,py+y) for px,py in points]
         poses = [convert_to_ros_posestamped(Pose(position=Position(x=x,y=y,z=0),
                           orientation=Orientation()),"map") for x,y in points]
         posepath = PosePath(poses=poses)

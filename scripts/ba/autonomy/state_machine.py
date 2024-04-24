@@ -1,6 +1,7 @@
 import ba.autonomy.routines as routines
 
 import rospy, threading
+import argparse
 
 from std_srvs.srv import Trigger,TriggerResponse, TriggerRequest
 
@@ -10,6 +11,7 @@ from ba.autonomy.routines import IRoutine
 State = IRoutine
 Service = rospy.Service
 Rate = rospy.Rate
+
 class StateMachine:
     """A first conecpt of a state machine, that controls the autonomous behaviour of the robot."""
     def __init__(self):
@@ -52,7 +54,20 @@ def main():
 The loop runs at 10hz, which is !not! in real-time. -> The loop might run slower than 10hz, if a process in the loop is delaying."""
     
     rospy.init_node("finite_state_machine")
-    
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-o","--origin",metavar="FLOAT",help="Sets the origin of the pathexplorer. Format: x y",default=[0,0],type=float,nargs="+")
+    args = parser.parse_args()
+
+    # Setting ROS params
+    try:
+        x = args.origin[0]
+        y = args.origin[1]
+    except KeyError as e:
+        print(e)
+        x = y = 0
+    rospy.set_param("/path_explorer/origin",{"x":x,"y":y})
+
     FSM: StateMachine = StateMachine()
     rate: Rate = rospy.Rate(10)
     
@@ -64,7 +79,7 @@ The loop runs at 10hz, which is !not! in real-time. -> The loop might run slower
         except Exception as e:
             print(e)
             running = False
-
+    
 def test():
     rospy.init_node("test_routine")
     
