@@ -7,3 +7,6 @@ yolov5m.pt
 log/
 .vscode
 log/
+gui/
+developer_gui.launch
+path_explorer_gui.yaml
