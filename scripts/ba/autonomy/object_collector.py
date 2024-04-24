@@ -3,7 +3,7 @@ import rospy, actionlib, math
 import ba_code.srv as basrv
 
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-from geometry_msgs.msg import Point,PoseStamped
+from geometry_msgs.msg import Point,PoseStamped, PointStamped
 
 from ba.navigation.robot import RobotMover
 from ba.utilities.transformations import quaternion_from_euler
@@ -34,6 +34,7 @@ Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-clie
     else:
         return client.get_result()
 
+STATIONNAMESPACE = "station"
 class ObjectCollector:
     """This node will controll the robot to fullfill the task of collecting objects that have been found in the area."""
     def __init__(self):
@@ -46,22 +47,22 @@ class ObjectCollector:
 
         self.__trasharea = PoseStamped()
         self.__trasharea.header.frame_id = "map"
-        self.__trasharea.pose.orientation = quaternion_from_euler((0,0,math.pi))
+        if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
+            origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
+            x = origin["x"]
+            y = origin["y"]
+        else:
+            x = 0
+            y = 0
+        self.__trasharea.pose.orientation = quaternion_from_euler((x,y,math.pi))
+        self.__trasharea.pose.position.x = x
+        self.__trasharea.pose.position.y = y
 
     def __init_server_proxies(self):
         self.__pop_req = rospy.ServiceProxy("/object_tracker/pop",basrv.PopObject)
 
     def follow_plan(self):
         return self.__substate()
-        #if obj.note.data == "empty":
-        #    print("There are no objects to collect...")
-        #    return False
-        #elif obj.clsID not in [1,2,3]:
-        #    print(f"Object of clsID: {obj.clsID} not collectible. Skip.")
-        #else:
-        #    print("Create plan...")
-        #    self.__collect_object(obj)
-        #return True
     
     def __print_state_execution(self,statename):
         print(f"ObjectCollector state execution: {statename}")
@@ -137,14 +138,18 @@ class ObjectCollector:
         try:
             print("Move to position infront of trash collection area.")
             self.__trasharea.header.stamp = rospy.Time.now()
-            self.__trasharea.pose.position.x = 1
-            self.__mover.move_to_pose(self.__trasharea)
+            self.__mover.move_to_point(
+                point=PointStamped(
+                    header=self.__trasharea.header,
+                    point=self.__trasharea.pose.position
+                ),
+                distance=1
+            )
             self.__mover.wait_for_result()
         
             rospy.sleep(.5)
             print("Move to trash collection area.")
             self.__trasharea.header.stamp = rospy.Time.now()
-            self.__trasharea.pose.position.x = 0
             self.__mover.move_to_pose(self.__trasharea)
             self.__mover.wait_for_result()
 
@@ -165,13 +170,6 @@ class ObjectCollector:
         except Exception as e:
             print(e)
         return False
-
-    #def __collect_object(self,obj):
-    #    rospy.sleep(.5)
-    #    self.__start_drop_routine()
-
-    #    rospy.sleep(.5)
-    #    rospy.loginfo("Finished trash delivery.")
 
     def loop(self):
         while not rospy.is_shutdown():
