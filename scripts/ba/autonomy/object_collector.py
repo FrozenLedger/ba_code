@@ -10,6 +10,7 @@ from ba.utilities.transformations import quaternion_from_euler
 #from tf.transformations import quaternion_from_euler
 
 from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher,pickupInstructions,dropInstructions
+from ba.tracking.object_tracker import TRACKERNAMESPACE
 
 def move_to_point(pnt: Point):
     """Uses the 'move_base' Node to move to a specified point in the 'map frame' with the orientation set to (0,0,0,1) in quaternions.
@@ -59,7 +60,7 @@ class ObjectCollector:
         self.__trasharea.pose.position.y = y
 
     def __init_server_proxies(self):
-        self.__pop_req = rospy.ServiceProxy("/object_tracker/pop",basrv.PopObject)
+        self.__pop_req = rospy.ServiceProxy(f"/{TRACKERNAMESPACE}/pop",basrv.PopObject)
 
     def follow_plan(self):
         return self.__substate()

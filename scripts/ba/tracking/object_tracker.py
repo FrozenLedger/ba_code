@@ -33,7 +33,8 @@ class ObjectTracker:
         self.__add_object_service = rospy.Service(f"/{TRACKERNAMESPACE}/add",basrv.AddObject,self.__add_object)
         self.__pop_object_service = rospy.Service(f"/{TRACKERNAMESPACE}/pop",basrv.PopObject,self.__pop_object)
         self.__get_list_service = rospy.Service(f"/{TRACKERNAMESPACE}/list",basrv.GetObjectList,self.__get_objects)
-        self.__max_distance_setter = rospy.Service(f"/{TRACKERNAMESPACE}/reset",Trigger,self._reset_request)
+        #self.__max_distance_setter = rospy.Service(f"/{TRACKERNAMESPACE}/reset",Trigger,self._reset_request)
+        self.__reset_service = rospy.Service(f"/{TRACKERNAMESPACE}/reset",Trigger,self._reset_request)
 
     def __add_object(self,request):
         obj = request.object
