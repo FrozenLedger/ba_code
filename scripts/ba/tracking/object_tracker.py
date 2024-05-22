@@ -3,22 +3,38 @@ import rospy,tf
 import ba_code.srv as basrv
 import ba_code.msg as bamsg
 
-from std_srvs.srv import Trigger
+from std_srvs.srv import Trigger, TriggerResponse
 from std_msgs.msg import String
 
+TRACKERNAMESPACE = "object_tracker"
 class ObjectTracker:
     """A server node to track objects and trash detected in the scene."""
     def __init__(self,world="map"):
-        self.__objects = {}
         self.__tf_listener = tf.TransformListener()
         self.__world = world
         self.__init_services()
+        self._reset()
+
+    def _reset(self):
+        self.__objects = {}
         self.__count = 0
+        if rospy.has_param(f"/{TRACKERNAMESPACE}/max_distance"):
+            self._max_distance = rospy.get_param(f"/{TRACKERNAMESPACE}/max_distance")
+        else:
+            self._max_distance = 1200 #cm
+        #if rospy.has_param(f"/{TRACKERNAMESPACE}/min_gap"):
+        #    self._min_gap = rospy.get_param(f"/{TRACKERNAMESPACE}/min_gap")
+
+    def _reset_request(self,req):
+        self._reset()
+        return TriggerResponse(success=True)
 
     def __init_services(self):
-        self.__add_object_service = rospy.Service("/object_tracker/add",basrv.AddObject,self.__add_object)
-        self.__pop_object_service = rospy.Service("/object_tracker/pop",basrv.PopObject,self.__pop_object)
-        self.__get_list_service = rospy.Service("/object_tracker/list",basrv.GetObjectList,self.__get_objects)
+        self.__add_object_service = rospy.Service(f"/{TRACKERNAMESPACE}/add",basrv.AddObject,self.__add_object)
+        self.__pop_object_service = rospy.Service(f"/{TRACKERNAMESPACE}/pop",basrv.PopObject,self.__pop_object)
+        self.__get_list_service = rospy.Service(f"/{TRACKERNAMESPACE}/list",basrv.GetObjectList,self.__get_objects)
+        #self.__max_distance_setter = rospy.Service(f"/{TRACKERNAMESPACE}/reset",Trigger,self._reset_request)
+        self.__reset_service = rospy.Service(f"/{TRACKERNAMESPACE}/reset",Trigger,self._reset_request)
 
     def __add_object(self,request):
         obj = request.object
@@ -66,7 +82,7 @@ class ObjectTracker:
         return result
 
 def main():
-    rospy.init_node("object_tracker")
+    rospy.init_node(TRACKERNAMESPACE)
     tracker = ObjectTracker()
 
     rospy.spin()

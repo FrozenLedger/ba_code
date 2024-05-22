@@ -94,15 +94,16 @@ class ObjectVisualizer:
                 self.__publish()
             except rospy.ServiceException as rse:
                 print(rse)
-            except Exception as e:
-                print(e)
             self.__rate.sleep()
 
 def main():
     rospy.init_node("tracked_objects_visualizer")
 
     object_visualizer = ObjectVisualizer()
-    object_visualizer.loop()
+    try:
+        object_visualizer.loop()
+    except rospy.ROSInterruptException as e:
+        print(e)
 
 if __name__ == "__main__":
     main()

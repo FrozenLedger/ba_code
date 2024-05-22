@@ -1,15 +1,20 @@
 import ba.autonomy.routines as routines
 
 import rospy, threading
+import argparse
 
 from std_srvs.srv import Trigger,TriggerResponse, TriggerRequest
 
 from ba.utilities.data import Data
 from ba.autonomy.routines import IRoutine
 
+from ba.tracking.object_tracker import TRACKERNAMESPACE
+from ba.autonomy.object_collector import STATIONNAMESPACE
+
 State = IRoutine
 Service = rospy.Service
 Rate = rospy.Rate
+
 class StateMachine:
     """A first conecpt of a state machine, that controls the autonomous behaviour of the robot."""
     def __init__(self):
@@ -52,7 +57,25 @@ def main():
 The loop runs at 10hz, which is !not! in real-time. -> The loop might run slower than 10hz, if a process in the loop is delaying."""
     
     rospy.init_node("finite_state_machine")
-    
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-o","--origin",metavar="FLOAT",help="Sets the origin of the station. Format: x y",default=[0,0],type=float,nargs="+")
+    parser.add_argument("-d","--max-distance",metavar="FLOAT",help="Sets the max distance of a detected object that will be collected.",default=1,type=float)
+    #parser.add_argument("-g","--min-gap",metavar="FLOAT",help="Sets the minimum gap [cm] of tracked objects. Objects that are within this range of another tracked object will be ignored.",default=1,type=float)
+    args = parser.parse_args()
+
+    rospy.set_param(f"/{TRACKERNAMESPACE}/max_distance",args.max_distance)
+    #rospy.set_param(f"/{TRACKERNAMESPACE}/min_gap", args.min_gap)
+
+    # Setting ROS params
+    try:
+        x = args.origin[0]
+        y = args.origin[1]
+    except KeyError as e:
+        print(e)
+        x = y = 0
+    rospy.set_param(f"/{STATIONNAMESPACE}/origin",{"x":x,"y":y})
+
     FSM: StateMachine = StateMachine()
     rate: Rate = rospy.Rate(10)
     
@@ -64,7 +87,7 @@ The loop runs at 10hz, which is !not! in real-time. -> The loop might run slower
         except Exception as e:
             print(e)
             running = False
-
+    
 def test():
     rospy.init_node("test_routine")
     

@@ -17,6 +17,9 @@ from ba.navigation.path_explorer import PosePath
 from ba.utilities.datatypes import Pose, Position, Orientation
 from ba.utilities.ros_conversions import convert_to_ros_posestamped
 
+from ba.autonomy.object_collector import STATIONNAMESPACE
+from ba.tracking.object_tracker import TRACKERNAMESPACE
+
 import numpy as np
 
 class IRoutine:
@@ -69,13 +72,21 @@ class ExploreRegionRoutine(IRoutine):
         #self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
         
         points = [(0.5,0.5),(0.5,-0.5),(-0.5,-0.5),(-0.5,0.5)]
+        try:
+            origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
+            x = origin["x"]
+            y = origin["y"]
+        except KeyError as e:
+            print(e)
+            x = y = 0
+        points = [(px+x,py+y) for px,py in points]
         poses = [convert_to_ros_posestamped(Pose(position=Position(x=x,y=y,z=0),
                           orientation=Orientation()),"map") for x,y in points]
         posepath = PosePath(poses=poses)
 
         self.__explorer = PathExplorer(robot=RobotMover(),path=posepath)
         
-        self.__object_tracker_request = rospy.ServiceProxy("/object_tracker/list",GetObjectList)
+        self.__object_tracker_request = rospy.ServiceProxy(f"/{TRACKERNAMESPACE}/list",GetObjectList)
 
     def execute(self):
         garbage_detected = len(self.__object_tracker_request().objects) > 0
@@ -104,9 +115,14 @@ class ShutdownRoutine(IRoutine):
         except:
             state = 9
 
-        print(f"State: {state}")
+        #print(f"State: {state}")
         if state in [2,9]: # 9 := LOST -> goal has been lost, 2 := ACCEPTED -> another goal was excepted
-            pnt = PointStamped(point=Point(0,0,0))
+            if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
+                origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
+                x = origin["x"]; y = origin["y"]
+            else:
+                x = 0; y = 0
+            pnt = PointStamped(point=Point(x,y,0))
             pnt.header.frame_id = "map"
             print(f"Publish new goal: {pnt.point} of frame {pnt.header.frame_id}")
             self.__mover.move_to_point(pnt)
@@ -114,7 +130,8 @@ class ShutdownRoutine(IRoutine):
             print(f"Goal reached. Shutting down now...")
             rospy.signal_shutdown("Shutdown requested.")
         elif state in [1]: # 1 := PENDING
-            print(f"Running: {state}")
+            pass
+            #print(f"Running: {state}")
         else:
             raise Exception("Invalid state recognized in the shutdown routine. A state has been reached by the move_base action server that is currently not handled by the ShutdownRoutine.")
 
