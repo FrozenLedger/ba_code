@@ -9,9 +9,10 @@ from std_srvs.srv import SetBool
 
 from ba.utilities.data import Data
 from ba.autonomy.object_collector import ObjectCollector
+from ba.navigation.explorer import NodeExplorer
 from ba_code.srv import GetObjectList
 #from ba.navigation.quadtree_explorer import QuadtreeExplorer
-from ba.navigation.path_explorer import PathExplorer
+from ba.navigation.path_explorer_node import PathExplorerNode
 
 from ba.navigation.path_explorer import PosePath
 from ba.utilities.datatypes import Pose, Position, Orientation
@@ -71,21 +72,22 @@ class ExploreRegionRoutine(IRoutine):
         #self.__wall_follower_client = rospy.ServiceProxy("/wall_follower/enable",SetBool)
         #self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
         
-        points = [(0.5,0.5),(0.5,-0.5),(-0.5,-0.5),(-0.5,0.5)]
-        try:
-            origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
-            x = origin["x"]
-            y = origin["y"]
-        except KeyError as e:
-            print(e)
-            x = y = 0
-        points = [(px+x,py+y) for px,py in points]
-        poses = [convert_to_ros_posestamped(Pose(position=Position(x=x,y=y,z=0),
-                          orientation=Orientation()),"map") for x,y in points]
-        posepath = PosePath(poses=poses)
+        #points = [(0.5,0.5),(0.5,-0.5),(-0.5,-0.5),(-0.5,0.5)]
+        #try:
+        #    origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
+        #    x = origin["x"]
+        #    y = origin["y"]
+        #except KeyError as e:
+        #    print(e)
+        #    x = y = 0
+        #points = [(px+x,py+y) for px,py in points]
+        #poses = [convert_to_ros_posestamped(Pose(position=Position(x=x,y=y,z=0),
+        #                  orientation=Orientation()),"map") for x,y in points]
+        #posepath = PosePath(poses=poses)
 
-        self.__explorer = PathExplorer(robot=RobotMover(),path=posepath)
-        
+        #self.__explorer = PathExplorerNode(robot=RobotMover(),path=posepath)
+        self.__explorer = NodeExplorer()
+
         self.__object_tracker_request = rospy.ServiceProxy(f"/{TRACKERNAMESPACE}/list",GetObjectList)
 
     def execute(self):

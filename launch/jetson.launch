@@ -26,6 +26,7 @@
 
     <!-- Autonomy Nodes -->
     <node pkg="ba_code" type="wall_follower.py" name="wall_follower" output="screen"></node>
+    <node pkg="ba_code" type="path_explorer_node.py" name="path_explorer_node" output="screen"></node>
 
     <!-- Objektverankerungs Nodes -->
     <node pkg="ba_code" name="object_tracker" type="object_tracker.py" output="screen" />

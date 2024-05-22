@@ -7,7 +7,7 @@ from ba_code.msg import Object
 
 class ObjectSpawner:
     def __init__(self):
-        self.__listener = rospy.Subscriber("/clicked_point",PointStamped,self.__publish)
+        self.__listener = rospy.Subscriber("/object_spawner/spawn",PointStamped,self.__publish)
         self.__add_object = rospy.ServiceProxy("/object_tracker/add",AddObject)
         print("ObjectSpawner initialized.")
 

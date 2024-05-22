@@ -17,6 +17,10 @@ class PosePath:
         self._index += 1
         self._index %= len(self._poses)
         return pose
+    
+    def set_poses(self, poses):
+        self._poses = poses
+        self._index = 0
 
 class PathExplorer:
     def __init__(self, robot: RobotMover, path: PosePath):
@@ -26,6 +30,10 @@ class PathExplorer:
     def explore(self):
         self._robot.move_to_pose(next(self._path))
         self._robot.wait_for_result()
+
+    @property
+    def path(self):
+        return self._path
 
 def main():
     points = [(0,0),(1,0),(0,1),(1,1)]
