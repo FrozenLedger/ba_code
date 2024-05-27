@@ -80,6 +80,8 @@ add_service_files(
     GetDirection.srv
     Explore.srv
     MoveArm.srv
+    SetPoseStamped.srv
+    GetPoseStamped.srv
 #   Service2.srv
 )
 
@@ -196,6 +198,7 @@ catkin_install_python(PROGRAMS
     scripts/ba/simulation/object_spawner.py
     scripts/ba/utilities/mapexpander.py
     scripts/ba/navigation/path_explorer_node.py
+    scripts/ba/tracking/station.py
     # scripts/ba/autonomy/simple_wall_explorer.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -7,6 +7,8 @@ from actionlib_msgs.msg import GoalStatusArray
 
 from std_srvs.srv import SetBool
 
+import ba_code.srv as basrv
+
 from ba.utilities.data import Data
 from ba.autonomy.object_collector import ObjectCollector
 from ba.navigation.explorer import NodeExplorer
@@ -119,15 +121,19 @@ class ShutdownRoutine(IRoutine):
 
         #print(f"State: {state}")
         if state in [2,9]: # 9 := LOST -> goal has been lost, 2 := ACCEPTED -> another goal was excepted
-            if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
-                origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
-                x = origin["x"]; y = origin["y"]
-            else:
-                x = 0; y = 0
-            pnt = PointStamped(point=Point(x,y,0))
-            pnt.header.frame_id = "map"
-            print(f"Publish new goal: {pnt.point} of frame {pnt.header.frame_id}")
-            self.__mover.move_to_point(pnt)
+            #if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
+            #    origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
+            #    x = origin["x"]; y = origin["y"]
+            #else:
+            #    x = 0; y = 0
+            get_station_pose = f"/{STATIONNAMESPACE}/pose"
+            rospy.wait_for_service(get_station_pose)
+            station_pose_request = rospy.ServiceProxy(get_station_pose,basrv.GetPoseStamped)
+            station_pose = station_pose_request().pose
+            #pnt = PointStamped(point=station_pose.pose.position)
+            #pnt.header.frame_id = station_pose.header.frame_id #"map"
+            #print(f"Publish new goal: {pnt.point} of frame {pnt.header.frame_id}")
+            self.__mover.move_to_pose(station_pose)
         elif state in [3,8]: # 3 := RECALLED, 8 := SUCCESS
             print(f"Goal reached. Shutting down now...")
             rospy.signal_shutdown("Shutdown requested.")

@@ -12,6 +12,8 @@ from ba.utilities.transformations import quaternion_from_euler
 from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher,pickupInstructions,dropInstructions
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 
+STATIONNAMESPACE = "station"
+
 def move_to_point(pnt: Point):
     """Uses the 'move_base' Node to move to a specified point in the 'map frame' with the orientation set to (0,0,0,1) in quaternions.
 Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/"""
@@ -35,7 +37,6 @@ Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-clie
     else:
         return client.get_result()
 
-STATIONNAMESPACE = "station"
 class ObjectCollector:
     """This node will controll the robot to fullfill the task of collecting objects that have been found in the area."""
     def __init__(self):
@@ -46,21 +47,24 @@ class ObjectCollector:
 
         self.__substate = self.__look_for_object
 
-        self.__trasharea = PoseStamped()
-        self.__trasharea.header.frame_id = "map"
-        if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
-            origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
-            x = origin["x"]
-            y = origin["y"]
-        else:
-            x = 0
-            y = 0
-        self.__trasharea.pose.orientation = quaternion_from_euler((x,y,math.pi))
-        self.__trasharea.pose.position.x = x
-        self.__trasharea.pose.position.y = y
+        #self.__trasharea = PoseStamped()
+        #self.__trasharea.header.frame_id = "map"
+        #if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
+        #    origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
+        #    x = origin["x"]
+        #    y = origin["y"]
+        #else:
+        #    x = 0
+        #    y = 0
+
+        self.__init_subscribers()
+        #self.__trasharea.pose.orientation = quaternion_from_euler((x,y,math.pi))
+        #self.__trasharea.pose.position.x = x
+        #self.__trasharea.pose.position.y = y
 
     def __init_server_proxies(self):
         self.__pop_req = rospy.ServiceProxy(f"/{TRACKERNAMESPACE}/pop",basrv.PopObject)
+        self.__station_pose_req = rospy.ServiceProxy(f"/{STATIONNAMESPACE}/pose",basrv.GetPose)
 
     def follow_plan(self):
         return self.__substate()
@@ -137,12 +141,16 @@ class ObjectCollector:
     def __move_to_trash_area(self):
         self.__print_state_execution("move to trash area")
         try:
-            print("Move to position infront of trash collection area.")
-            self.__trasharea.header.stamp = rospy.Time.now()
+            print("Move to position infront of station.")
+            #self.__trasharea.header.stamp = rospy.Time.now()
+            station_pose = self.__station_pose_req().pose
+            station_pose.header.stamp = rospy.Time.now()
             self.__mover.move_to_point(
                 point=PointStamped(
-                    header=self.__trasharea.header,
-                    point=self.__trasharea.pose.position
+                    #header=self.__trasharea.header,
+                    #point=self.__trasharea.pose.position
+                    header=station_pose.header,
+                    point=station_pose.pose.position
                 ),
                 distance=1
             )
@@ -150,8 +158,9 @@ class ObjectCollector:
         
             rospy.sleep(.5)
             print("Move to trash collection area.")
-            self.__trasharea.header.stamp = rospy.Time.now()
-            self.__mover.move_to_pose(self.__trasharea)
+            #self.__trasharea.header.stamp = rospy.Time.now()
+            station_pose.header.stamp = rospy.Time.now()
+            self.__mover.move_to_pose(station_pose) #self.__trasharea)
             self.__mover.wait_for_result()
 
             self.__substate = self.__drop_trash

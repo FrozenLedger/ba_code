@@ -7,35 +7,14 @@ from std_srvs.srv import Trigger, TriggerResponse
 from ba.utilities.ros_conversions import convert_to_ros_posestamped
 from ba.utilities.datatypes import Pose, Position, Orientation
 from ba.navigation.explorer import EXPLORERNS
+from ba.utilities.markers import VectorMarker
 
-from visualization_msgs.msg import Marker,MarkerArray
+from visualization_msgs.msg import MarkerArray
 
 import rospy
 
 WAYPOINTSNS = "waypoints"
 WAYPOSESNS = "wayposes"
-
-class VectorMarker:
-    def __init__(self, pose, mid=0):
-        marker = Marker()
-
-        marker.color.g = 255
-        marker.color.a = 0.5
-        marker.header = pose.header
-        marker.type = 0
-        marker.id = mid
-        marker.pose = pose.pose
-        marker.scale.x = 1.41
-        marker.scale.y = 0.05
-        marker.scale.z = 0.05
-
-        marker.lifetime = rospy.Duration(0)
-
-        self._data = marker
-        
-    @property
-    def data(self):
-        return self._data
 
 class PathExplorerNode(PathExplorer):
     def __init__(self, robot: RobotMover, path: PosePath):
