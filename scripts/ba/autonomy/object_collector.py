@@ -57,7 +57,7 @@ class ObjectCollector:
         #    x = 0
         #    y = 0
 
-        self.__init_subscribers()
+        #self.__init_subscribers()
         #self.__trasharea.pose.orientation = quaternion_from_euler((x,y,math.pi))
         #self.__trasharea.pose.position.x = x
         #self.__trasharea.pose.position.y = y
