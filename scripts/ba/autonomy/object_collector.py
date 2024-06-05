@@ -64,7 +64,7 @@ class ObjectCollector:
 
     def __init_server_proxies(self):
         self.__pop_req = rospy.ServiceProxy(f"/{TRACKERNAMESPACE}/pop",basrv.PopObject)
-        self.__station_pose_req = rospy.ServiceProxy(f"/{STATIONNAMESPACE}/pose",basrv.GetPose)
+        self.__station_pose_req = rospy.ServiceProxy(f"/{STATIONNAMESPACE}/pose",basrv.GetPoseStamped)
 
     def follow_plan(self):
         return self.__substate()

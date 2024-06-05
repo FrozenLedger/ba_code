@@ -20,12 +20,14 @@ STREAM_ENABLE_SUFFIX = "/stream_enable"
 COLOR_PREFIX = "/color"
 DEPTH_PREFIX = "/depth"
 IMAGE_SUFFIX = "/image"
+
+CAMERA_NS="rs_d435"
 class RealSenseD435Server:
     """A server node that exposes a limited set of camera functionalities to the ros network."""
     # Camera link: camera_link
     # Color image frame: camera_color_optical_frame
     # Depth image frame: camera_depth_optical_frame
-    def __init__(self, frame_id="camera_link",outpath="/tmp/rsd435_images/", width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0,max_buffer_size=10):
+    def __init__(self, frame_id="camera_link",outpath=f"/tmp/{CAMERA_NS}_images/", width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0,max_buffer_size=10):
         self.__camera = RealSenseD435(width=width,height=height,format=format,framerate=framerate,delay=delay)
 
         self.__frame_id = frame_id
@@ -48,7 +50,7 @@ class RealSenseD435Server:
 
     @property
     def NAME_PREFIX(self):
-        return "/rsd435"
+        return f"/{CAMERA_NS}"
 
     def __loop(self):
         running = True
