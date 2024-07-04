@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="ba_code" type="object_cluster_server.py" name="object_cluster_server" output="screen">
+        <rosparam file="$(find ba_code)/param/object_tracker.yaml" command="load" />
+    </node>
+</launch>

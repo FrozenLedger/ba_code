@@ -1,0 +1,3 @@
+ObjectTracker:
+  epsilon: 0.1
+  max_z: 0.1

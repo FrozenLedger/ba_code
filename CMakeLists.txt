@@ -199,6 +199,7 @@ catkin_install_python(PROGRAMS
     scripts/ba/utilities/mapexpander.py
     scripts/ba/navigation/path_explorer_node.py
     scripts/ba/tracking/station.py
+    scripts/ba/tracking/object_cluster_server.py
     # scripts/ba/autonomy/simple_wall_explorer.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

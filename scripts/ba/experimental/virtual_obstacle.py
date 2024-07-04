@@ -37,9 +37,10 @@ def publish_virtual_obstacles():
     rospy.wait_for_service(obstacle_tracker)
     get_obstacles_callback = rospy.ServiceProxy(obstacle_tracker, basrv.GetObjectList)
     
-    rate = rospy.Rate(10)  # 1 Hz
+    rate = rospy.Rate(1)  # 1 Hz
     while not rospy.is_shutdown():
         try:
+            print("Spawning...")
             spawn_obstacles(get_obstacles_callback, publisher, rate)
         except rospy.ServiceException as e:
             print(e)
