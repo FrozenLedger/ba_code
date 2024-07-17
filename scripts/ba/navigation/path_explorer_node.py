@@ -13,7 +13,7 @@ from visualization_msgs.msg import MarkerArray
 
 import rospy
 
-WAYPOINTSNS = "waypoints"
+#WAYPOINTSNS = "waypoints"
 WAYPOSESNS = "wayposes"
 
 class PathExplorerNode(PathExplorer):
@@ -28,12 +28,12 @@ class PathExplorerNode(PathExplorer):
         self._init_publishers()
 
     def _init_subscribers(self):
-        rospy.Subscriber(f"/{EXPLORERNS}/{WAYPOINTSNS}/add",PointStamped,self._add_point)
+        #rospy.Subscriber(f"/{EXPLORERNS}/{WAYPOINTSNS}/add",PointStamped,self._add_point)
         rospy.Subscriber(f"/{EXPLORERNS}/{WAYPOSESNS}/add",PoseStamped,self._add_pose)
 
     def _init_services(self):
-        rospy.Service(f"/{EXPLORERNS}/{WAYPOINTSNS}/clear",Trigger,self._clear_waypoints)
-        rospy.Service(f"/{EXPLORERNS}/{WAYPOINTSNS}/apply",Trigger,self._apply_waypoints)
+        #rospy.Service(f"/{EXPLORERNS}/{WAYPOINTSNS}/clear",Trigger,self._clear_waypoints)
+        #rospy.Service(f"/{EXPLORERNS}/{WAYPOINTSNS}/apply",Trigger,self._apply_waypoints)
         rospy.Service(f"/{EXPLORERNS}/{WAYPOSESNS}/clear",Trigger,self._clear_wayposes)
         rospy.Service(f"/{EXPLORERNS}/{WAYPOSESNS}/apply",Trigger,self._apply_wayposes)
         rospy.Service(f"/{EXPLORERNS}/explore",Trigger,self._explore)

@@ -18,6 +18,7 @@ Rate = rospy.Rate
 class StateMachine:
     """A first conecpt of a state machine, that controls the autonomous behaviour of the robot."""
     def __init__(self):
+        print("Initialize State Machine...")
         self._active_state: State = routines.ChargeBatteryRoutine(self)
         self._shutdown_signal_server: Service = rospy.Service("/state_machine/shutdown",Trigger,self._shutdown_signal_received)
         self._battery_low_signal_server: Service = rospy.Service("/state_machine/battery_low",Trigger,self._battery_low_signal_received)

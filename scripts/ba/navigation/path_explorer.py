@@ -28,8 +28,11 @@ class PathExplorer:
         self._path = path
 
     def explore(self):
-        self._robot.move_to_pose(next(self._path))
+        next_pose: Pose = next(self._path)
+        #print(f"Move to pose: {next_pose}")
+        self._robot.move_to_pose(next_pose)
         self._robot.wait_for_result()
+        #print(f"Reached pose.")
 
     @property
     def path(self):

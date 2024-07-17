@@ -71,25 +71,7 @@ class ExploreRegionRoutine(IRoutine):
     """Routine that will command the robot to explore the area. Transition to CollectGarbageRoutine as soon as trash has been detected."""
     def __init__(self, FSM):
         super().__init__(FSM)
-        #self.__wall_follower_client = rospy.ServiceProxy("/wall_follower/enable",SetBool)
-        #self.__explorer = QuadtreeExplorer(filterfunction=lambda x: np.max(x) > 240)
-        
-        #points = [(0.5,0.5),(0.5,-0.5),(-0.5,-0.5),(-0.5,0.5)]
-        #try:
-        #    origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
-        #    x = origin["x"]
-        #    y = origin["y"]
-        #except KeyError as e:
-        #    print(e)
-        #    x = y = 0
-        #points = [(px+x,py+y) for px,py in points]
-        #poses = [convert_to_ros_posestamped(Pose(position=Position(x=x,y=y,z=0),
-        #                  orientation=Orientation()),"map") for x,y in points]
-        #posepath = PosePath(poses=poses)
-
-        #self.__explorer = PathExplorerNode(robot=RobotMover(),path=posepath)
         self.__explorer = NodeExplorer()
-
         self.__object_tracker_request = rospy.ServiceProxy(f"/{TRACKERNAMESPACE}/list",GetObjectList)
 
     def execute(self):
