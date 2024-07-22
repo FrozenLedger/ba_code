@@ -1,12 +1,10 @@
-import rospy,cv2
-import numpy as np
+import rospy
 
 from ba.detection.yolov5_interface import Yolov5Model,Trashnet,DetectionAdapter
 
 from ba_code.srv import Detect,DetectResponse
 from ba_code.srv import TakeSnapshotStamped, GetMetrics, ClearFrame
 
-from std_msgs.msg import Header
 from sensor_msgs.msg import RegionOfInterest
 from std_msgs.msg import String
 

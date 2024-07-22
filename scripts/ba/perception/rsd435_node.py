@@ -17,6 +17,7 @@ import numpy as np
 SNAPSHOT_TOPIC_SUFFIX = "/take_snapshot"
 FRAMES_PREFIX = "/frames"
 STREAM_ENABLE_SUFFIX = "/stream_enable"
+SAVE_ENABLE_SUFFIX = "/save/enable"
 COLOR_PREFIX = "/color"
 DEPTH_PREFIX = "/depth"
 IMAGE_SUFFIX = "/image"
@@ -34,6 +35,7 @@ class RealSenseD435Server:
         self.__outpath = outpath
         Path(outpath).mkdir(parents=True, exist_ok=True)
 
+        self.__save_enable = False
         self.__stream_enable = False
         self.__framerate = rospy.Rate(framerate)
         self.__idle = rospy.Rate(1)
@@ -87,6 +89,8 @@ class RealSenseD435Server:
     def __init_services(self):
         self.__snapshot_server = rospy.Service(self.NAME_PREFIX + SNAPSHOT_TOPIC_SUFFIX,basrv.TakeSnapshotStamped,self.__take_snapshot)
         self.__stream_enabler = rospy.Service(self.NAME_PREFIX + STREAM_ENABLE_SUFFIX,SetBool,self.__enable_stream)
+        self.__save_enabler = rospy.Service(self.NAME_PREFIX + SAVE_ENABLE_SUFFIX,SetBool,self.__enable_stream)
+        
         #self.__distance_server = rospy.Service("rs_d435/get_distance",basrv.GetDistance,self.__get_distance)
         self.__clear_frame_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/clear",basrv.ClearFrame,self.__clear_frame_request)
         self.__color_crame_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/color",basrv.SendImage,self.__send_color)
@@ -140,11 +144,12 @@ class RealSenseD435Server:
                 self.__add_frames(frame_buffer,imgID=imgID)
             except MemoryError as e:
                 print(e)
-        try:
-            cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
-            print(f"[INFO] RGB image saved with imgID:{imgID}")
-        except Exception as e:
-            print(e)
+        if self.__save_enable:
+            try:
+                cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
+                print(f"[INFO] RGB image saved with imgID:{imgID}")
+            except Exception as e:
+                print(e)
 
         response = basrv.TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
         return response

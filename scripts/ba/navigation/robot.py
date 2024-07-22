@@ -1,13 +1,12 @@
 import ba.configs
 import rospy,tf,math,actionlib
 
-from geometry_msgs.msg import PoseStamped, Pose, PointStamped
+from geometry_msgs.msg import PoseStamped, Pose
 
 import ba.utilities.singletons.tf_listener_singleton
 from ba.utilities.transformations import quaternion_from_euler
 
 from move_base_msgs.msg import MoveBaseAction,MoveBaseGoal
-from actionlib_msgs.msg import GoalID
 
 class RobotMover:
     """A class that simplifies the interaction with the 'move_base' package for controlling the robot movement."""
