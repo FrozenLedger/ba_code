@@ -37,12 +37,17 @@ class PathExplorerNode(PathExplorer):
         rospy.Service(f"/{EXPLORERNS}/{WAYPOSESNS}/clear",Trigger,self._clear_wayposes)
         rospy.Service(f"/{EXPLORERNS}/{WAYPOSESNS}/apply",Trigger,self._apply_wayposes)
         rospy.Service(f"/{EXPLORERNS}/explore",Trigger,self._explore)
+        rospy.Service(f"/{EXPLORERNS}/cancel",Trigger,self._cancel)
         
     def _init_publishers(self):
         self._marker_publisher = rospy.Publisher(f"{EXPLORERNS}/{WAYPOSESNS}/visualization",MarkerArray,queue_size=10)
 
     def _explore(self, request):
         self.explore()
+        return TriggerResponse(success=True)
+    
+    def _cancel(self, request):
+        self.cancel()
         return TriggerResponse(success=True)
 
     def _clear_waypoints(self, request):

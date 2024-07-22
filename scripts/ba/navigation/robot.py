@@ -3,7 +3,7 @@ import rospy,tf,math,actionlib
 
 from geometry_msgs.msg import PoseStamped, Pose, PointStamped
 
-import ba.utilities.singletons
+import ba.utilities.singletons.tf_listener_singleton
 from ba.utilities.transformations import quaternion_from_euler
 
 from move_base_msgs.msg import MoveBaseAction,MoveBaseGoal
@@ -14,11 +14,13 @@ class RobotMover:
     def __init__(self,world="map",base="base_link"):
         self.__world = world
         self.__base = base
-        #self.__tf_listener = ba.utilities.singletons.get_transform_listener() #tf.TransformListener()
+        #self.__tf_listener = ba.utilities.singletons.tf_listener_singleton.get_transform_listener() #tf.TransformListener()
         self.__move_base_client = actionlib.SimpleActionClient("move_base",MoveBaseAction)
         #t0 = rospy.Time.now()
         #rospy.sleep(0.25)
         #self.__tf_listener.waitForTransform(world,base,t0,rospy.Duration(1))
+
+        ba.utilities.singletons.tf_listener_singleton.get_transform_listener()
 
     def rotate(self,angle):
         if angle < 0:
@@ -51,7 +53,7 @@ class RobotMover:
         point.header.stamp = t0
         target_frame = point.header.frame_id
 
-        tf_listener = ba.utilities.singletons.get_transform_listener()
+        tf_listener = ba.utilities.singletons.tf_listener_singleton.get_transform_listener()
         tf_listener.waitForTransform(self.__base,target_frame,t0,rospy.Duration(0.25))
         pntst = tf_listener.transformPoint(self.__base,point)
 
@@ -67,7 +69,7 @@ class RobotMover:
         ps.pose.position.y -= y
         ps.pose.orientation = quaternion_from_euler((0,0,alpha))
 
-        tf_listener = ba.utilities.singletons.get_transform_listener()
+        tf_listener = ba.utilities.singletons.tf_listener_singleton.get_transform_listener()
         tf_listener.waitForTransform(self.__base,self.__world,t0,rospy.Duration(0.25))
         ps = tf_listener.transformPose(self.__world,ps)
 
@@ -79,7 +81,7 @@ class RobotMover:
         ps.pose = pose
         t0 = rospy.Time.now()
         
-        tf_listener = ba.utilities.singletons.get_transform_listener()
+        tf_listener = ba.utilities.singletons.tf_listener_singleton.get_transform_listener()
         tf_listener.waitForTransform(self.__world,self.__base,t0,rospy.Duration(0.25))
         return tf_listener.transformPose(self.__world,ps)
 
@@ -88,6 +90,9 @@ class RobotMover:
     
     def get_actionclient(self):
         return self.__move_base_client
+    
+    def cancel(self):
+        self.__move_base_client.cancel_all_goals()
     
     @property
     def pose(self):

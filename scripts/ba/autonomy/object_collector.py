@@ -47,21 +47,6 @@ class ObjectCollector:
 
         self.__substate = self.__look_for_object
 
-        #self.__trasharea = PoseStamped()
-        #self.__trasharea.header.frame_id = "map"
-        #if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
-        #    origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
-        #    x = origin["x"]
-        #    y = origin["y"]
-        #else:
-        #    x = 0
-        #    y = 0
-
-        #self.__init_subscribers()
-        #self.__trasharea.pose.orientation = quaternion_from_euler((x,y,math.pi))
-        #self.__trasharea.pose.position.x = x
-        #self.__trasharea.pose.position.y = y
-
     def __init_server_proxies(self):
         self.__pop_req = rospy.ServiceProxy(f"/{TRACKERNAMESPACE}/pop",basrv.PopObject)
         self.__station_pose_req = rospy.ServiceProxy(f"/{STATIONNAMESPACE}/pose",basrv.GetPoseStamped)

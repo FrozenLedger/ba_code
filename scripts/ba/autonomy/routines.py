@@ -1,29 +1,16 @@
-from ba.navigation.robot import RobotMover
-
 import rospy
+import ba_code.srv as basrv
+from ba_code.srv import GetObjectList
+
 from geometry_msgs.msg import PointStamped, Point
 
-from actionlib_msgs.msg import GoalStatusArray
-
-from std_srvs.srv import SetBool
-
-import ba_code.srv as basrv
-
-from ba.utilities.data import Data
+from ba.navigation.robot import RobotMover
 from ba.autonomy.object_collector import ObjectCollector
 from ba.navigation.explorer import NodeExplorer
-from ba_code.srv import GetObjectList
-#from ba.navigation.quadtree_explorer import QuadtreeExplorer
-from ba.navigation.path_explorer_node import PathExplorerNode
-
-from ba.navigation.path_explorer import PosePath
-from ba.utilities.datatypes import Pose, Position, Orientation
-from ba.utilities.ros_conversions import convert_to_ros_posestamped
-
 from ba.autonomy.object_collector import STATIONNAMESPACE
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 
-import numpy as np
+#from ba.utilities.singletons.robot_mover_singleton import get_robot_mover
 
 class IRoutine:
     def __init__(self,FSM):
@@ -35,6 +22,12 @@ class IRoutine:
 
     def execute(self):
         return self
+    
+    #def __del__(self):
+    #    try:
+    #        get_robot_mover().cancel()
+    #    except Exception as e:
+    #        print(e)
 
 class CollectGarbageRoutine(IRoutine):
     """Routine that will collect trash that has been detected. If no trash is available -> transition to ExploreRegionRoutine"""
@@ -101,27 +94,17 @@ class ShutdownRoutine(IRoutine):
         except:
             state = 9
 
-        #print(f"State: {state}")
         if state in [2,9]: # 9 := LOST -> goal has been lost, 2 := ACCEPTED -> another goal was excepted
-            #if rospy.has_param(f"/{STATIONNAMESPACE}/origin"):
-            #    origin = rospy.get_param(f"/{STATIONNAMESPACE}/origin")
-            #    x = origin["x"]; y = origin["y"]
-            #else:
-            #    x = 0; y = 0
             get_station_pose = f"/{STATIONNAMESPACE}/pose"
             rospy.wait_for_service(get_station_pose)
             station_pose_request = rospy.ServiceProxy(get_station_pose,basrv.GetPoseStamped)
             station_pose = station_pose_request().pose
-            #pnt = PointStamped(point=station_pose.pose.position)
-            #pnt.header.frame_id = station_pose.header.frame_id #"map"
-            #print(f"Publish new goal: {pnt.point} of frame {pnt.header.frame_id}")
             self.__mover.move_to_pose(station_pose)
         elif state in [3,8]: # 3 := RECALLED, 8 := SUCCESS
             print(f"Goal reached. Shutting down now...")
             rospy.signal_shutdown("Shutdown requested.")
         elif state in [1]: # 1 := PENDING
             pass
-            #print(f"Running: {state}")
         else:
             raise Exception("Invalid state recognized in the shutdown routine. A state has been reached by the move_base action server that is currently not handled by the ShutdownRoutine.")
 

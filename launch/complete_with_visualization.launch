@@ -22,7 +22,10 @@
     <node pkg="ba_code" type="path_explorer_node.py" name="path_explorer_node" output="screen"></node>
 
     <!-- Objectverankerungs Nodes -->
-    <node pkg="ba_code" name="object_tracker" type="object_tracker.py" output="screen" />
+    <!-- node pkg="ba_code" name="object_tracker" type="object_tracker.py" output="screen" / -->
+    <node pkg="ba_code" type="object_cluster_server.py" name="object_cluster_server" output="screen">
+        <rosparam file="$(find ba_code)/param/object_tracker.yaml" command="load" />
+    </node>
 
     <!-- Visualization Nodes -->
     <node pkg="ba_code" type="lidar_visualizer.py" name="lidar_visualizer" output="screen"></node>

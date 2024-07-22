@@ -1,10 +1,7 @@
 import rospy
 
 from ba.autonomy.object_collector import ObjectCollector
-#from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher
-from ba.navigation.robot import RobotMover
-from ba.tracking.object_scout import ObjectScout
-from ba.tracking.object_tracker import ObjectTracker
+from ba.utilities.singletons import get_robot_mover
 
 from geometry_msgs.msg import PointStamped
 
@@ -13,8 +10,8 @@ class RobotRoutine:
 The routine will try to collect all found objects after the exploration."""
     def __init__(self):
         self.__object_collector = ObjectCollector()
-        self.__mover = RobotMover()
-        self.__scout = ObjectScout()
+        self.__mover = get_robot_mover() #RobotMover()
+        #self.__scout = ObjectScout()
         #self.__tracker = ObjectTracker()
 
     def start_routine(self):
