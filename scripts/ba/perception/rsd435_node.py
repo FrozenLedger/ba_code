@@ -35,7 +35,7 @@ class RealSenseD435Server:
         self.__outpath = outpath
         Path(outpath).mkdir(parents=True, exist_ok=True)
 
-        self.__save_enable = False
+        self.__save_enable = True
         self.__stream_enable = False
         self.__framerate = rospy.Rate(framerate)
         self.__idle = rospy.Rate(1)
