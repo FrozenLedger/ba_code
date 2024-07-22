@@ -89,7 +89,7 @@ class RealSenseD435Server:
     def __init_services(self):
         self.__snapshot_server = rospy.Service(self.NAME_PREFIX + SNAPSHOT_TOPIC_SUFFIX,basrv.TakeSnapshotStamped,self.__take_snapshot)
         self.__stream_enabler = rospy.Service(self.NAME_PREFIX + STREAM_ENABLE_SUFFIX,SetBool,self.__enable_stream)
-        self.__save_enabler = rospy.Service(self.NAME_PREFIX + SAVE_ENABLE_SUFFIX,SetBool,self.__enable_stream)
+        self.__save_enabler = rospy.Service(self.NAME_PREFIX + SAVE_ENABLE_SUFFIX,SetBool,self.__enable_save)
         
         #self.__distance_server = rospy.Service("rs_d435/get_distance",basrv.GetDistance,self.__get_distance)
         self.__clear_frame_server = rospy.Service(self.NAME_PREFIX + FRAMES_PREFIX + "/clear",basrv.ClearFrame,self.__clear_frame_request)
@@ -110,6 +110,17 @@ class RealSenseD435Server:
             self.__stream_enable = request.data
             response.success = True
             print(f"Streaming enabled: {request.data}")
+        except Exception as e:
+            response.success = False
+            response.message = str(e)
+        return response
+    
+    def __enable_save(self, request):
+        response = SetBoolResponse()
+        try:
+            self.__save_enable = request.data
+            response.success = True
+            print(f"Save images enabled: {request.data}")
         except Exception as e:
             response.success = False
             response.message = str(e)
