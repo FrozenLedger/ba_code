@@ -9,7 +9,10 @@ from ba.navigation.robot import RobotMover
 from ba.utilities.transformations import quaternion_from_euler
 #from tf.transformations import quaternion_from_euler
 
-from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher,pickupInstructions,dropInstructions
+from ba.manipulator.robot_pose_publisher import RobtoarmPosePublisher
+from ba.manipulator.robot_pose_publisher import pickupInstructions,dropInstructions
+
+from ba.manipulator.robotarm_adapter import RobotarmAdapter
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 
 STATIONNAMESPACE = "station"
@@ -39,10 +42,13 @@ Code based on: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-clie
 
 class ObjectCollector:
     """This node will controll the robot to fullfill the task of collecting objects that have been found in the area."""
+    @property
+    def robotarm(self):
+        return self.__robotarm
     def __init__(self):
         self.__rate: rospy.Rate = rospy.Rate(0.2) # update every 5s
         self.__mover: RobotMover = RobotMover()
-        self.__robotarm: RobotarmPosePublisher = RobotarmPosePublisher()
+        self.__robotarm: RobotarmAdapter = RobotarmAdapter() #RobotarmPosePublisher()
         self.__init_server_proxies()
 
         self.__substate = self.__look_for_object
@@ -175,9 +181,11 @@ class ObjectCollector:
             self.__rate.sleep()
 
     def __start_pickup_routine(self):
-        self.__robotarm.publish(pickupInstructions())
+        #self.__robotarm.publish(pickupInstructions())
+        self.__robotarm.run_pickup_instructions()
     def __start_drop_routine(self):
-        self.__robotarm.publish(dropInstructions())
+        #self.__robotarm.publish(dropInstructions())
+        self.__robotarm.run_drop_instructions()
 
     def __raise_invalid_action_state_exception(self):
         raise Exception("The action client reached a state that has not been handled by the ObjectCollector yet.")
@@ -199,3 +207,4 @@ def main2():
 
 if __name__ == "__main__":
     main()
+

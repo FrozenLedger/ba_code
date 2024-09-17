@@ -25,7 +25,7 @@
     </node>
 
     <!-- Autonomy Nodes -->
-    <node pkg="ba_code" type="wall_follower.py" name="wall_follower" output="screen"></node>
+    <!-- node pkg="ba_code" type="wall_follower.py" name="wall_follower" output="screen"></node -->
     <node pkg="ba_code" type="path_explorer_node.py" name="path_explorer_node" output="screen"></node>
 
     <!-- Objektverankerungs Nodes -->
@@ -33,6 +33,6 @@
     <node pkg="ba_code" name="station" type="station.py" output="screen" />
 
     <!-- bridging the robotarm tf-tree with the robotbase tf-tree-->
-    <node pkg="tf" type="static_transform_publisher" name="robotarm_tf_bridge" args="0.12 0 -0.07 1.5708 0 1.5708 base_link world 10"/>
+    <!-- node pkg="tf" type="static_transform_publisher" name="robotarm_tf_bridge" args="0.12 0 -0.07 1.5708 0 1.5708 base_link world 10"/-->
     <node pkg="tf" type="static_transform_publisher" name="base_link_footprint_fix" args="0 0 0.102 0 0 0 base_footprint base_link 10" />
 </launch>
