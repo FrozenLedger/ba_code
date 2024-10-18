@@ -1,13 +1,59 @@
 import rospy
+from abc import ABC, abstractmethod
 
 from sensor_msgs.msg import Joy
 from solarswarm2.components.GrabBehaviour import GrabBehaviour
 from time import sleep
 
+from magni_dxl_module.robotarm_controller import RobotarmController
+from .teleoperation_logger import TELEOPLOGGER as LOGGER
+
+class ACommand(ABC):
+    @abstractmethod
+    def execute(self) -> None: pass
+    @abstractmethod
+    def undo(self) -> None: pass
+
+class NullCommand(ACommand):
+    pass
+
+class UndoCommand(ACommand):
+    def __init__(self, target):
+        self._target = target
+    def execute(self):
+        self._target.undo()
+    def undo(self):
+        self._target.execute()
+
+class StateTransitionCommand(ACommand):
+    pass
+
+class OpenGripperCommand(ACommand):
+    pass
+
+class EnableTorqueCommand(ACommand):
+    pass
+
+class JoypadGripper:
+    def __init__(self):
+        self.subscriber = rospy.Subscriber("/joy",Joy,self.handle_input)
+        self._buttons = {
+            "A":NullCommand(),
+            "B":NullCommand(),
+            "X":NullCommand(),
+            "Y":NullCommand()
+        }
+
+    def _handle_input(self, data: Joy) -> None:
+        buttons = data.buttons
+
+        if buttons[0] + buttons[1] + buttons[3] + buttons[4] > 1:
+            return
+
 class JoypadGripper:
     """A node that takes inputs from the /joy topic and sends further control signals to the robotarm to control its grab behaviour."""
     def __init__(self):
-        self.grab_behaviour = GrabBehaviour(start_pose=[0,15,60,-45])
+        self.grab_behaviour = RobotarmController() #GrabBehaviour(start_pose=[0,15,60,-45])
         self.subscriber = rospy.Subscriber("/joy",Joy,self.publisher_cb)        
         self.__btns = {"A":True,
                        "B":True,
@@ -19,9 +65,9 @@ class JoypadGripper:
         
         sleep(1)
         rospy.loginfo("Start delay...")
-        self.grab_behaviour.setState(s0)
-        self.grab_behaviour.open_gripper()
-        self.grab_behaviour.publish()
+        #self.grab_behaviour.set_positions_deg(s0) #self.grab_behaviour.setState(s0)
+        #self.grab_behaviour.open_gripper()
+        #self.grab_behaviour.publish()
         sleep(5)
         rospy.loginfo("JoypadGripper ready.")
         
@@ -122,6 +168,5 @@ def trans_2_1(gripper:GrabBehaviour):
 
 if __name__ == "__main__":
     rospy.init_node("joypad_manipulator")
-    #rospy.init_node("joypad_manipulator_node")
     joypadgripper = JoypadGripper()
     rospy.spin()
