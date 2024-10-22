@@ -1,6 +1,6 @@
 import logging
 import sys
-from ..logging.formatter import FORMATTER
+from ba.features.logging.formatter import FORMATTER
 
 LOGPATH = "/tmp/teleoperation.log"
 TELEOPLOGGER = logging.getLogger(__name__)

@@ -2,14 +2,17 @@ import rospy
 import threading, time
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from .teleoperation_logger import TELEOPLOGGER as LOGGER
+from ba.features.teleoperation.teleoperation_logger import TELEOPLOGGER as LOGGER
 
 class JoypadTeleopNode:
     """A node that takes inputs from the /joy topic and sends further control signals to the /cmd_vel topic in order to control its move behaviour."""
-    def __init__(self,freq=10) -> None:
+    def __init__(self,freq=10, deadzone: float = 0.05, spd_factor: float = 1.0) -> None:
         self.vel_msg: Twist = Twist()
 
-        self.DEADZONE: float = 0.05
+        self._spd_factor: float = spd_factor
+        LOGGER.info(f"Joypad spd_factor set to: {self._spd_factor}")
+
+        self.DEADZONE: float = deadzone
         LOGGER.info(f"Joypad deadzone/sensibility set to {self.DEADZONE}.")
 
         self.enabled: bool = False
@@ -58,13 +61,15 @@ class JoypadTeleopNode:
     
     def _publisher_cb(self,data: Joy) -> None:
         x_lin = data.axes[1]
-        self.vel_msg.linear.x = x_lin
+        if x_lin > -0.25 and x_lin < 0.25:
+            x_lin = 0
+        self.vel_msg.linear.x = x_lin*self._spd_factor
 
         z_rot: float = data.axes[0]
         if x_lin >= 0:
-            self.vel_msg.angular.z = z_rot
+            self.vel_msg.angular.z = z_rot*self._spd_factor
         else:
-            self.vel_msg.angular.z = -z_rot
+            self.vel_msg.angular.z = -z_rot*self._spd_factor
 
         if data.axes[4] < 1-2*self.DEADZONE:
             if not self.enabled:
@@ -79,14 +84,15 @@ class JoypadTeleopNode:
         if self.enabled:
             # publishes the Twist message if movement is enabled
             self.publisher.publish(self.vel_msg)
+            #print(self.vel_msg)
         self.rate.sleep()
 
     def __del__(self) -> None:
         if self._thread.is_alive():
             self.stop()
-        LOGGER.info(f"{type(self).__name__} was destroyed.")
+        #LOGGER.info(f"{type(self).__name__} was destroyed.")
         
 if __name__ == "__main__":
     rospy.init_node("joypad_teleoperator")
-    teleop = JoypadTeleopNode()
+    teleop = JoypadTeleopNode(deadzone=0.1, spd_factor=0.5)
     teleop.run()
