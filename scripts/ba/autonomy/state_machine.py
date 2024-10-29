@@ -109,5 +109,5 @@ def test():
     LOGGER.info("Finished state_machine test.")
 
 if __name__ == "__main__":
-    #main()
-    test()
+    main()
+    #test()
