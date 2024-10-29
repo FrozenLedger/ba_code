@@ -1,0 +1,14 @@
+import logging
+import sys
+from ba.features.logging.formatter import FORMATTER
+
+LOGPATH = "/tmp/autonomy.log"
+AUTONOMYLOGGER = logging.getLogger(__name__)
+AUTONOMYLOGGER.setLevel(logging.INFO)
+FILEHANDLER = logging.FileHandler(LOGPATH)
+FILEHANDLER.setLevel(logging.INFO)
+FILEHANDLER.setFormatter(FORMATTER)
+CONSOLEHANDLER = logging.StreamHandler(sys.stdout)
+CONSOLEHANDLER.setFormatter(FORMATTER)
+AUTONOMYLOGGER.addHandler(CONSOLEHANDLER)
+AUTONOMYLOGGER.addHandler(FILEHANDLER)

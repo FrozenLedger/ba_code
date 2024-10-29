@@ -10,6 +10,7 @@ from ba.autonomy.routines import IRoutine
 
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 from ba.autonomy.object_collector import STATIONNAMESPACE
+from ba.autonomy.autonomy_logger import AUTONOMYLOGGER as LOGGER
 
 State = IRoutine
 Service = rospy.Service
@@ -18,12 +19,12 @@ Rate = rospy.Rate
 class StateMachine:
     """A first conecpt of a state machine, that controls the autonomous behaviour of the robot."""
     def __init__(self):
-        print("Initialize State Machine...")
+        LOGGEr.info("Initialize State Machine...")
         self._active_state: State = routines.ChargeBatteryRoutine(self)
         self._shutdown_signal_server: Service = rospy.Service("/state_machine/shutdown",Trigger,self._shutdown_signal_received)
         self._battery_low_signal_server: Service = rospy.Service("/state_machine/battery_low",Trigger,self._battery_low_signal_received)
         self._lock = threading.Lock()
-        print("State Machine running.")
+        LOGGER.info("State Machine running.")
 
     def _set_active_state(self,new_state: State):
         try:
@@ -32,7 +33,7 @@ class StateMachine:
             self._active_state = new_state
             return TriggerResponse(success=True,message="SUCCESS")
         except Exception as e:
-            print(e)
+            LOGGER.error(str(e))
             return TriggerResponse(success=False,message="FAILED")
         finally:
             print("Lock released.")
@@ -73,7 +74,7 @@ The loop runs at 10hz, which is !not! in real-time. -> The loop might run slower
         x = args.origin[0]
         y = args.origin[1]
     except KeyError as e:
-        print(e)
+        LOGGER.error(str(e))
         x = y = 0
     rospy.set_param(f"/{STATIONNAMESPACE}/origin",{"x":x,"y":y})
 
@@ -86,10 +87,11 @@ The loop runs at 10hz, which is !not! in real-time. -> The loop might run slower
             FSM.update()
             rate.sleep()
         except Exception as e:
-            print(e)
+            LOGGER.error(str(e))
             running = False
     
 def test():
+    LOGGER.info("Running state_machine test.")
     rospy.init_node("test_routine")
     
     FSM: StateMachine = StateMachine()
@@ -101,9 +103,10 @@ def test():
             routine.execute()
             rate.sleep()
         except rospy.exceptions.ROSInterruptException as e:
-            print(e)
+            LOGGER.error(str(e))
             break
+    LOGGER.info("Finished state_machine test.")
 
 if __name__ == "__main__":
-    main()
-    #test()
+    #main()
+    test()

@@ -7,7 +7,7 @@ from geometry_msgs.msg import PointStamped, Point
 from std_msgs.msg import Header
 
 from ba_code.msg import Metrics
-
+from ba.perception.camera_logger import CAMERALOGGER as LOGGER
 
 class FrameBuffer:
     """A class to store information about the depth and color information of an image taken from a scene and calculating the metrics of the depth information of an area in the image."""
@@ -93,7 +93,6 @@ class FrameBuffer:
             center=center, median=median, avg=avg, std=std
         )  # returns values in [m]
 
-
 class RealSenseD435:
     """A class that will handle the communication with the real sense d435 camera and align the depth information with the color information."""
 
@@ -113,8 +112,9 @@ class RealSenseD435:
             self.__pipeline_profile = self.__config.resolve(
                 rs.pipeline_wrapper(self.__pipeline)
             )
-        except:
-            print("RuntimeError: No device connected.")
+        except RuntimeError as e:
+            #LOGGER.error("RuntimeError: No device connected.")
+            LOGGER.error("RuntimeError: " + str(e))
             exit(1)
 
         self.__device = str(
@@ -123,38 +123,45 @@ class RealSenseD435:
             )
         )
         self.__delay_amount = delay
+        LOGGER.info(f"Delay set to: {delay}")
         self.__alignment = rs.align(rs.stream.color)
+        LOGGER.info(f"Alignment: rs.align(rs.stream.color)")
         # self.__alignment = rs.align(rs.stream.depth)
 
         # Configurations
         self.__config.enable_stream(
             rs.stream.depth, width, height, rs.format.z16, framerate
         )
+        LOGGER.info("Enabled depth stream.")
         self.__config.enable_stream(
             rs.stream.color, width, height, rs.format.bgr8, framerate
         )
+        LOGGER.info("Enabled color stream.")
 
         # Protected
         self._width = width
         self._height = height
         self._format = format
+        LOGGER.info(f"Width set to: {width}")
+        LOGGER.info(f"Height set to: {height}")
+        LOGGER.info(f"Format set to: {format}")
 
         if self.__device != "D400":
-            print(
-                f"WARNING: Found {self.__device}, which is not supported for use with the class RealSenseD435Facet. Please connect a RealSense D400 series device!"
+            LOGGER.warning(
+                f"Found {self.__device}, which is not supported for use with the class RealSenseD435Facet. Please connect a RealSense D400 series device!"
             )
         else:
             try:
                 self.start_pipeline()
                 self.__running = True
             except:
-                print("Unkown Error: Starting pipeline failed.")
+                LOGGER.error("Unkown Error. Starting pipeline failed.")
 
     def start_pipeline(self) -> None:
         self.__pipeline.start(self.__config)
         self.__starttime: float = time.time()
         # self.__delayed: bool = False
-        print("INFO: Pipeline started.")
+        LOGGER.info("Pipeline started.")
 
     ### properties ###
     @property
@@ -173,14 +180,14 @@ class RealSenseD435:
 
     def stop_pipeline(self) -> None:
         self.__pipeline.stop()
-        print("INFO: Pipeline stopped.")
+        LOGGER.info("Pipeline stopped.")
 
     # Dunder
     def __del__(self) -> None:
         if self.__running:
             self.stop_pipeline()
 
-    def take_snapshot(self, header: Header) -> FrameBuffer:
+    def take_snapshot(self, header: Header = Header()) -> FrameBuffer:
         # based on: https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/align-depth2color.py
         # also based on: https://github.com/InterlRealSense/librealsense/issues/2481
         """Takes an image of the scene and returns an object of the class FrameBuffer. Returns a FrameBuffer."""
@@ -189,14 +196,17 @@ class RealSenseD435:
         dT: float = time.time() - self.__starttime
         if dT <= self.__delay_amount:
             delay: float = self.__delay_amount - dT
-            print(
+            LOGGER.info(
                 "Delay program by %.2fs in order to let the camera adjust to the environment..."
                 % delay
             )
             time.sleep(delay)
 
         # Get frames
-        frames: rs.composite_frame = self.__pipeline.wait_for_frames()
+        try:
+            frames: rs.composite_frame = self.__pipeline.wait_for_frames()
+        except RuntimeError as e:
+            LOGGER.error(str(e))
         # Align frames
         aligned_frames = self.__alignment.process(frames)
         # Get aligned frames
@@ -246,38 +256,48 @@ def buffer_test():
     import time
 
     cam = RealSenseD435()
-
     width = cam.WIDTH
     height = cam.HEIGHT
 
-    frames = cam.take_snapshot()
-    time.sleep(1)
-    cam.take_snapshot()
-    print("1")
-    time.sleep(1)
-    cam.take_snapshot()
-    print("2")
-    time.sleep(1)
-    cam.stop_pipeline()
-    time.sleep(1)
-    cam.start_pipeline()
-    time.sleep(1)
-    fb2 = cam.take_snapshot()
-    print("3")
-    del cam
-
-    for i in range(5):
+    success = False
+    LOGGER.info("Start buffer test...")
+    try:
+        frames = cam.take_snapshot()
         time.sleep(1)
-        print(f"Delay: {i}")
+        cam.take_snapshot()
+        LOGGER.info("1")
+        time.sleep(1)
+        cam.take_snapshot()
+        LOGGER.info("2")
+        time.sleep(1)
+        cam.stop_pipeline()
+        time.sleep(1)
+        cam.start_pipeline()
+        time.sleep(1)
+        fb2 = cam.take_snapshot()
+        LOGGER.info("3")
+        del cam
 
-    px = width // 2
-    py = height // 2
-    pnt = frames.pixel_to_point3D(px, py)
-    print(pnt)
+        for i in range(5):
+            time.sleep(1)
+            LOGGER.info(f"Delay: {i}")
 
-    cv2.imshow("FB2", fb2.colorim)
-    cv2.waitKey(0)
+        px = width // 2
+        py = height // 2
+        pnt = frames.pixel_to_point3D(px, py)
+        LOGGER.info(pnt)
 
+        cv2.imshow("FB2", fb2.colorim)
+        cv2.waitKey(0)
+        success = True
+    except Exception as e:
+        LOGGER.error(str(e))
+        success = False
+    finally:
+        if success:
+            LOGGER.info("Buffer test successful.")
+        else:
+            LOGGER.info("Buffer test failed")
 
 if __name__ == "__main__":
     # cv_view(frame_rate=5,size=4)

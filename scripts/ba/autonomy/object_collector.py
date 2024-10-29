@@ -9,7 +9,7 @@ from ba.navigation.robot import RobotMover
 from ba.utilities.transformations import quaternion_from_euler
 #from tf.transformations import quaternion_from_euler
 
-from ba.manipulator.robot_pose_publisher import RobtoarmPosePublisher
+from ba.manipulator.robot_pose_publisher import RobotarmPosePublisher
 from ba.manipulator.robot_pose_publisher import pickupInstructions,dropInstructions
 
 from ba.manipulator.robotarm_adapter import RobotarmAdapter

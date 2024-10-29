@@ -3,6 +3,7 @@ import pyrealsense2 as rs
 
 from cv_bridge import CvBridge
 from ba.perception.rsd435_camera import RealSenseD435
+from ba.perception.camera_logger import CAMERALOGGER as LOGGER
 
 from std_srvs.srv import SetBool,SetBoolResponse
 
@@ -55,15 +56,17 @@ class RealSenseD435Server:
         return f"/{CAMERA_NS}"
 
     def __loop(self):
+        LOGGER.info("Start camera_node loop.")
         running = True
         while running and not rospy.is_shutdown():
             try:
                 self.__publish()
             except Exception as e:
-                print(e)
+                LOGGER.Error(str(e))
                 running = False
                 self.__stream_enable = False
             self.__idle.sleep()
+        LOGGER.info("Ended camera_node loop.")
 
     def __publish(self):
         while self.__stream_enable and not rospy.is_shutdown():
@@ -87,6 +90,7 @@ class RealSenseD435Server:
             self.__framerate.sleep()
 
     def __init_services(self):
+        LOGGER.info("[CameraNode] initialize services...")
         self.__snapshot_server = rospy.Service(self.NAME_PREFIX + SNAPSHOT_TOPIC_SUFFIX,basrv.TakeSnapshotStamped,self.__take_snapshot)
         self.__stream_enabler = rospy.Service(self.NAME_PREFIX + STREAM_ENABLE_SUFFIX,SetBool,self.__enable_stream)
         self.__save_enabler = rospy.Service(self.NAME_PREFIX + SAVE_ENABLE_SUFFIX,SetBool,self.__enable_save)
@@ -100,6 +104,7 @@ class RealSenseD435Server:
         #self.__get_distance_metrics_server = rospy.Service("/rs_d435/get_distance_metrics",basrv.GetMetrics,self.__distance_metrics_from_area)
 
     def __init_publisher(self):
+        LOGGER.info("[CameraNode] initialize publishers...")
         self.__color_pub = rospy.Publisher(self.NAME_PREFIX + COLOR_PREFIX + IMAGE_SUFFIX,Image,queue_size=1)
         self.__depth_pub = rospy.Publisher(self.NAME_PREFIX + DEPTH_PREFIX + IMAGE_SUFFIX,Image,queue_size=1)
         #self.__deptharr_pub = rospy.Publisher("/rs_d435/depth/data",PointCloud2,queue_size=1)
@@ -109,10 +114,11 @@ class RealSenseD435Server:
         try:
             self.__stream_enable = request.data
             response.success = True
-            print(f"Streaming enabled: {request.data}")
+            LOGGER.info(f"[CameraNode] Streaming enabled: {request.data}")
         except Exception as e:
             response.success = False
             response.message = str(e)
+            LOGGER.error(str(e))
         return response
     
     def __enable_save(self, request):
@@ -120,10 +126,11 @@ class RealSenseD435Server:
         try:
             self.__save_enable = request.data
             response.success = True
-            print(f"Save images enabled: {request.data}")
+            LOGGER.info(f"Save images enabled: {request.data}")
         except Exception as e:
             response.success = False
             response.message = str(e)
+            LOGGER.error(str(e))
         return response
     
     def __send_color(self,request):
@@ -154,13 +161,13 @@ class RealSenseD435Server:
             try:
                 self.__add_frames(frame_buffer,imgID=imgID)
             except MemoryError as e:
-                print(e)
+                LOGGER.error(str(e))
         if self.__save_enable:
             try:
                 cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
-                print(f"[INFO] RGB image saved with imgID:{imgID}")
+                LOGGER.info(f"RGB image saved with imgID:{imgID}")
             except Exception as e:
-                print(e)
+                LOGGER.error(str(e))
 
         response = basrv.TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
         return response
@@ -169,9 +176,9 @@ class RealSenseD435Server:
         if len(self.__buffer) < self.__max_buffer_size:
             self.__buffer[imgID] = frame_buffer
             self.__buffer_count += 1
-            print(f"[INFO] Added frames to buffer with imgID: {imgID} -> buffer[{self.__buffer_count}/{self.__max_buffer_size}]")
+            LOGGER.info(f"Added frames to buffer with imgID: {imgID} -> buffer[{self.__buffer_count}/{self.__max_buffer_size}]")
             return
-        raise MemoryError("[Error] Buffersize exceeded. Please clear some frames from the RealSenseD435.frame_buffer.")
+        raise MemoryError("Buffersize exceeded. Please clear some frames from the RealSenseD435.frame_buffer.")
 
     def __clear_frame_request(self,request):
         response = basrv.ClearFrameResponse()
@@ -182,9 +189,9 @@ class RealSenseD435Server:
         if imgID in self.__buffer:
             del self.__buffer[imgID]
             self.__buffer_count -= 1
-            print(f"[INFO] Removed frames from buffer with imgID: {imgID} -> buffer[{self.__buffer_count}/{self.__max_buffer_size}]")
+            LOGGER.info(f"Removed frames from buffer with imgID: {imgID} -> buffer[{self.__buffer_count}/{self.__max_buffer_size}]")
             return True
-        print(f"[Warning] Frame buffer with imgID:{imgID} not in buffer.")
+        LOGGER.warning(f"Frame buffer with imgID:{imgID} not in buffer.")
         return False
     
     def __deproject_pixel_to_point3d(self,request):
@@ -201,7 +208,7 @@ class RealSenseD435Server:
             response = basrv.GetMetricsResponse(metrics=metrics)
         except Exception as e:
             response = basrv.GetMetricsResponse()
-            print(e)
+            LOGGER.error(str(e))
         return response
 
 def get_distance(area,px,py,size=0):
@@ -216,7 +223,6 @@ def get_distance(area,px,py,size=0):
 
 def main():
     rospy.init_node("rs_d435")
-
     frame_id = "camera_color_optical_frame"
     rs_server = RealSenseD435Server(delay=0,width=1280,height=720,frame_id=frame_id)
     rospy.spin()
