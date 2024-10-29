@@ -10,6 +10,7 @@ from ba.autonomy.object_collector import STATIONNAMESPACE
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 
 import ba.autonomy.routines.iroutine as iroutine
+from ba.autonomy.autonomy_logger import AUTONOMYLOGGER as LOGGER
 from ba.navigation.robot import RobotMover
 class ShutdownRoutine(iroutine.IRoutine):
     """Routine to move the robot to the starting location and forces the ros node to shutdown.
@@ -36,7 +37,7 @@ class ShutdownRoutine(iroutine.IRoutine):
             station_pose = station_pose_request().pose
             self.__mover.move_to_pose(station_pose)
         elif state in [3,8]: # 3 := RECALLED, 8 := SUCCESS
-            print(f"Goal reached. Shutting down now...")
+            LOGGER.info(f"Goal reached. Shutting down now...")
             rospy.signal_shutdown("Shutdown requested.")
         elif state in [1]: # 1 := PENDING
             pass
