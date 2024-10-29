@@ -6,11 +6,12 @@ import argparse
 from std_srvs.srv import Trigger,TriggerResponse, TriggerRequest
 
 from ba.utilities.data import Data
-from ba.autonomy.routines import IRoutine
-
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 from ba.autonomy.object_collector import STATIONNAMESPACE
 from ba.autonomy.autonomy_logger import AUTONOMYLOGGER as LOGGER
+from ba.autonomy.routines.iroutine import IRoutine
+from ba.autonomy.routines.charge_battery_routine import ChargeBatteryRoutine
+from ba.autonomy.routines.shutdown_routine import ShutdownRoutine
 
 State = IRoutine
 Service = rospy.Service
@@ -19,8 +20,8 @@ Rate = rospy.Rate
 class StateMachine:
     """A first conecpt of a state machine, that controls the autonomous behaviour of the robot."""
     def __init__(self):
-        LOGGEr.info("Initialize State Machine...")
-        self._active_state: State = routines.ChargeBatteryRoutine(self)
+        LOGGER.info("Initialize State Machine...")
+        self._active_state: State = ChargeBatteryRoutine(self)
         self._shutdown_signal_server: Service = rospy.Service("/state_machine/shutdown",Trigger,self._shutdown_signal_received)
         self._battery_low_signal_server: Service = rospy.Service("/state_machine/battery_low",Trigger,self._battery_low_signal_received)
         self._lock = threading.Lock()
@@ -40,10 +41,10 @@ class StateMachine:
             self._lock.release()
 
     def _battery_low_signal_received(self,request: TriggerRequest):
-        return self._set_active_state( routines.ChargeBatteryRoutine(self) )
+        return self._set_active_state( ChargeBatteryRoutine(self) )
     
     def _shutdown_signal_received(self,request: TriggerRequest):
-        return self._set_active_state( routines.ShutdownRoutine(self) )
+        return self._set_active_state( ShutdownRoutine(self) )
     
     def update(self):
         """Executes the behaviour of the active state. The execute methode of the state is expected to return itself or a different state if a state transition is performed.
@@ -95,7 +96,7 @@ def test():
     rospy.init_node("test_routine")
     
     FSM: StateMachine = StateMachine()
-    routine: State = routines.ShutdownRoutine(FSM)
+    routine: State = ShutdownRoutine(FSM)
 
     rate: Rate = rospy.Rate(10)
     while not rospy.is_shutdown():
