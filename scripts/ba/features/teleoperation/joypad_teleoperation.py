@@ -71,7 +71,7 @@ class JoypadTeleopNode:
         else:
             self.vel_msg.angular.z = -z_rot*self._spd_factor
 
-        if data.axes[4] < 1-2*self.DEADZONE:
+        if data.axes[5] < 1-2*self.DEADZONE:
             if not self.enabled:
                 self.enabled = True
                 print("Enabled movement.")
