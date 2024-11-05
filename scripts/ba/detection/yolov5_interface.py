@@ -3,6 +3,11 @@ import torch, yolov5
 
 from pathlib import Path
 
+if torch.cuda.is_available():
+    print(f"GPU: {torch.cuda.get_device-name(0)} is available.")
+else:
+    print("No GPU available.")
+
 class DetectionAdapter:
     """An adapter class for easier excess of different data structures from the yolo inference data."""
     def __init__(self,detection):

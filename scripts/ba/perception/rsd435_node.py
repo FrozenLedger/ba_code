@@ -167,7 +167,7 @@ class RealSenseD435Server:
                 cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
                 LOGGER.info(f"RGB image saved with imgID:{imgID}")
             except Exception as e:
-                LOGGER.error(str(e))
+                LOGGER.error(f"[CameraNode] {str(e)}")
 
         response = basrv.TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
         return response
@@ -224,7 +224,7 @@ def get_distance(area,px,py,size=0):
 def main():
     rospy.init_node("rs_d435")
     frame_id = "camera_color_optical_frame"
-    rs_server = RealSenseD435Server(delay=0,width=1280,height=720,frame_id=frame_id)
+    rs_server = RealSenseD435Server(delay=5,width=1280,height=720,frame_id=frame_id)
     rospy.spin()
 
 if __name__ == "__main__":

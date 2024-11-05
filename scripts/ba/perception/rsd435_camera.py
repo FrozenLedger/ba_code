@@ -205,21 +205,22 @@ class RealSenseD435:
         # Get frames
         try:
             frames: rs.composite_frame = self.__pipeline.wait_for_frames()
+            # Align frames
+            aligned_frames = self.__alignment.process(frames)
+            # Get aligned frames
+            frame_buffer = FrameBuffer(aligned_frames, header=header)
+            return frame_buffer
+
         except RuntimeError as e:
-            LOGGER.error(str(e))
-        # Align frames
-        aligned_frames = self.__alignment.process(frames)
-        # Get aligned frames
-        frame_buffer = FrameBuffer(aligned_frames, header=header)
-
+            LOGGER.error(f"[Camera] {str(e)}")
+        
         # Validate that both frames are valid
-        if (
-            not frame_buffer.aligned_depth_frame
-            or not frame_buffer.aligned_color_frame
-        ):
-            return
+        #if (
+        #    not frame_buffer.aligned_depth_frame
+        #    or not frame_buffer.aligned_color_frame
+        #):
+        #    return
 
-        return frame_buffer
 
 
 def cv_view(frame_rate=1, size=4):
