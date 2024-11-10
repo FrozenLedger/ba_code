@@ -4,6 +4,7 @@ import pyrealsense2 as rs
 from cv_bridge import CvBridge
 from ba.perception.rsd435_camera import RealSenseD435
 from ba.perception.camera_logger import CAMERALOGGER as LOGGER
+from ba.perception.rsd435_resolution import RealSenseD435ColorResolution, RealSenseD435DepthResolution
 
 from std_srvs.srv import SetBool,SetBoolResponse
 
@@ -29,8 +30,23 @@ class RealSenseD435Server:
     # Camera link: camera_link
     # Color image frame: camera_color_optical_frame
     # Depth image frame: camera_depth_optical_frame
-    def __init__(self, frame_id="camera_link",outpath=f"/tmp/{CAMERA_NS}_images/", width: int=640, height: int=480, format: rs.format=rs.format.z16, framerate: int=30, delay: float=5.0,max_buffer_size=10):
-        self.__camera = RealSenseD435(width=width,height=height,format=format,framerate=framerate,delay=delay)
+    def __init__(self,
+            frame_id="camera_link",
+            outpath=f"/tmp/{CAMERA_NS}_images/",
+            color_resolution:RealSenseD435ColorResolution = RealSenseD435ColorResolution.rs640x480, # width: int=640,
+            depth_resolution:RealSenseD435DepthResolution = RealSenseD435DepthResolution.rs640x480, # height: int=480,
+            format: rs.format=rs.format.z16,
+            framerate: int=30,
+            delay: float=5.0,
+            max_buffer_size=10
+        ):
+        self.__camera = RealSenseD435(
+            color_resolution=color_resolution, # width=width,
+            depth_resolution=depth_resolution, # height=height,
+            format=format,
+            framerate=framerate,
+            delay=delay
+        )
 
         self.__frame_id = frame_id
         self.__outpath = outpath
@@ -224,7 +240,12 @@ def get_distance(area,px,py,size=0):
 def main():
     rospy.init_node("rs_d435")
     frame_id = "camera_color_optical_frame"
-    rs_server = RealSenseD435Server(delay=5,width=1280,height=720,frame_id=frame_id)
+    rs_server = RealSenseD435Server(
+        delay=5,
+        color_resolution=RealSenseD435ColorResolution.rs640x480,# width=width,
+        depth_resolution=RealSenseD435DepthResolution.rs640x480,# height=height,
+        frame_id=frame_id
+    )
     rospy.spin()
 
 if __name__ == "__main__":
