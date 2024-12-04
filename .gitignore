@@ -9,3 +9,4 @@ log/
 log/
 developer_gui.launch
 path_explorer_gui.yaml
+dockerfiles/Dockerfile

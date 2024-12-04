@@ -13,6 +13,11 @@ rosrun tf static_transform_publisher 0.12 0 -0.07 1.5708 0 1.5708 base_link worl
 * usb connection -> camera
 * usb -> lidar (usually: /dev/ttyUSB0)
 
+## Docker Jetson-Containers
+git clone https://github.com/dusty-nv/jetson-containers
+bash jetson-containers/install.sh
+
+
 ## Required Packages:
 sudo apt-get install ros-noetic-realsense2-camera
 sudo apt-get install ros-noetic-realsense2-description

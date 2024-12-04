@@ -1,0 +1,24 @@
+FROM arm64v8/ros:noetic-ros-base
+RUN apt update && apt upgrade -y
+RUN apt install git -y
+
+RUN mkdir -p ~/catkin_ws/src
+RUN cd ~/catkin_ws/src \
+&& git clone "https://github.com/FrozenLedger/solarswarm_detection_pkg.git"
+
+RUN cd ~/catkin_ws && /bin/bash -c "source /opt/ros/noetic/setup.bash;catkin_make"
+RUN cd ~/catkin_ws && /bin/bash -c "rosdep install --from-paths src --ignore-src --rosdistro=$ROS_DISTRO -y"
+RUN cd ~/catkin_ws && /bin/bash -c "source /opt/ros/noetic/setup.bash;catkin_make"
+
+RUN apt update && apt install ros-noetic-navigation ros-noetic-slam-toolbox -y
+RUN echo "source /opt/ros/noetic/setup.bash\nsource ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+
+# clear apt lists
+RUN rm -rf /var/lib/apt/lists/*
+
+# setup entrypoint
+COPY ./ros_entrypoint.sh /
+RUN bash -c "chmod +x /ros_entrypoint.sh"
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["bash"]
