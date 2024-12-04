@@ -284,8 +284,9 @@ def buffer_test():
 
         px = width // 2
         py = height // 2
-        pnt = frames.pixel_to_point3D(px, py)
-        LOGGER.info(pnt)
+        # pnt = frames.pixel_to_point3D(px, py)
+        cv2.imwrite("/tmp/test-image.jpg", frames.colorim)
+        #LOGGER.info(pnt)
 
         cv2.imshow("FB2", fb2.colorim)
         cv2.waitKey(0)
