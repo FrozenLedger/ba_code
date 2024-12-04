@@ -10,6 +10,7 @@ from ba.autonomy.object_collector import STATIONNAMESPACE
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 
 import ba.autonomy.routines.iroutine as iroutine
+from ba.autonomy.autonomy_logger import AUTONOMYLOGGER as LOGGER
 
 #from ba.utilities.singletons.robot_mover_singleton import get_robot_mover
 class ExploreRegionRoutine(iroutine.IRoutine):
@@ -22,7 +23,7 @@ class ExploreRegionRoutine(iroutine.IRoutine):
     def execute(self):
         garbage_detected = len(self.__object_tracker_request().objects) > 0
         if garbage_detected:
-            print("State transition -> CollectGarbageRoutine")
+            LOGGER.info("State transition -> CollectGarbageRoutine")
             return iroutine.CollectGarbageRoutine(self.FSM)
 
         self.__explorer.explore()

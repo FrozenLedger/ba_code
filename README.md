@@ -3,7 +3,7 @@
 ## RealSense installation:
 https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy
 
-## Transformation fix: base -> robotarm
+## [Deprecated] Transformation fix: base -> robotarm
 rosrun tf static_transform_publisher 0.12 0 -0.07 1.5708 0 1.5708 base_link world 10
 
 # Jetson
@@ -12,6 +12,9 @@ rosrun tf static_transform_publisher 0.12 0 -0.07 1.5708 0 1.5708 base_link worl
 
 * usb connection -> camera
 * usb -> lidar (usually: /dev/ttyUSB0)
+
+## CUDA installation for Jetson NX Xavier:
+https://www.seeedstudio.com/blog/2020/07/29/install-cuda-11-on-jetson-nano-and-xavier-nx/?srsltid=AfmBOoqUfbfqZSXzyQKox-F6KxN1O3cNPoEd-Hyv_gwkOmrrB5d_6Wcq
 
 ## Jetson startup commands
 cd /Documents/github/catkin_ba/
@@ -43,3 +46,8 @@ use the /clock topic: http://wiki.ros.org/Clock
 --- or ---
 synchronize using chrony: http://wiki.ros.org/ROS/NetworkSetup
 
+# TODOs
+[ ] Stable WLAN/Wifi Setup.
+[ ] Containerization using Docker or Podman
+[ ] Improvement of the Trash-Detection/Object-Detection
+[ ] Improvement of the Statemachine -> needs higher abstraction

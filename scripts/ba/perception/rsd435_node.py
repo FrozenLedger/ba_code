@@ -4,6 +4,7 @@ import pyrealsense2 as rs
 from cv_bridge import CvBridge
 from ba.perception.rsd435_camera import RealSenseD435
 from ba.perception.camera_logger import CAMERALOGGER as LOGGER
+from ba.perception.rsd435_resolution import RealSenseD435ColorResolution, RealSenseD435DepthResolution
 
 from std_srvs.srv import SetBool,SetBoolResponse
 
@@ -30,20 +31,35 @@ class RealSenseD435Server:
     # Color image frame: camera_color_optical_frame
     # Depth image frame: camera_depth_optical_frame
     def __init__(self,
+           
             frame_id="camera_link",
+            
             outpath=f"/tmp/{CAMERA_NS}_images/",
-            width: int=640, height: int=480,
+           
+            color_resolution:RealSenseD435ColorResolution = RealSenseD435ColorResolution.rs640x480, # width: int=640,
+            depth_resolution:RealSenseD435DepthResolution = RealSenseD435DepthResolution.rs640x480, # height: int=480,
+           
             rs_format: rs.format=rs.format.z16,
+           
             framerate: int=30,
+           
             delay: float=5.0,
+            
             max_buffer_size=10
-    ):
+    
+        ):
         self.__camera = RealSenseD435(
-            width=width,
-            height=height,
+            
+            color_resolution=color_resolution, # width=width,
+            
+            depth_resolution=depth_resolution, # height=height,
+            
             format=rs_format,
+            
             framerate=framerate,
+            
             delay=delay
+        
         )
 
         self.__frame_id = frame_id
@@ -181,7 +197,7 @@ class RealSenseD435Server:
                 cv2.imwrite(f"{self.__outpath}/color_{imgID}.jpg",frame_buffer.colorim)
                 LOGGER.info(f"RGB image saved with imgID:{imgID}")
             except Exception as e:
-                LOGGER.error(str(e))
+                LOGGER.error(f"[CameraNode] {str(e)}")
 
         response = basrv.TakeSnapshotStampedResponse(header=Header(stamp=rospy.Time.now(),frame_id=self.__frame_id),imgID=imgID)
         return response
@@ -240,8 +256,8 @@ def main():
     frame_id = "camera_color_optical_frame"
     rs_server = RealSenseD435Server(
         delay=5,
-        width=640,
-        height=480,
+        color_resolution=RealSenseD435ColorResolution.rs640x480,# width=width,
+        depth_resolution=RealSenseD435DepthResolution.rs640x480,# height=height,
         frame_id=frame_id
     )
     rospy.spin()

@@ -9,6 +9,7 @@ from std_msgs.msg import Header
 from ba_code.msg import Metrics
 from ba.perception.camera_logger import CAMERALOGGER as LOGGER
 from ba.perception.framebuffer import FrameBuffer
+from ba.perception.rsd435_resolution import RealSenseD435ColorResolution, RealSenseD435DepthResolution
 
 class RealSenseD435:
     """A class that will handle the communication with the real sense d435 camera and align the depth information with the color information."""
@@ -19,8 +20,8 @@ class RealSenseD435:
 
     def __init__(
         self,
-        width: int = 640,
-        height: int = 480,
+        color_resolution: RealSenseD435ColorResolution = RealSenseD435ColorResolution.rs640x480, #width: int = 640,
+        depth_resolution: RealSenseD435DepthResolution = RealSenseD435DepthResolution.rs640x480, #height: int = 480,
         format: rs.format = rs.format.z16,
         framerate: int = 30,
         delay: float = 5.0,
@@ -35,7 +36,7 @@ class RealSenseD435:
             )
         except RuntimeError as e:
             #LOGGER.error("RuntimeError: No device connected.")
-            LOGGER.error("RuntimeError: " + str(e))
+            LOGGER.error("[Camera] RuntimeError: " + str(e))
             exit(1)
 
         self.__device = str(
@@ -44,45 +45,52 @@ class RealSenseD435:
             )
         )
         self.__delay_amount = delay
-        LOGGER.info(f"Delay set to: {delay}")
+        LOGGER.info(f"[Camera] Delay set to: {delay}")
         self.__alignment = rs.align(rs.stream.color)
-        LOGGER.info(f"Alignment: rs.align(rs.stream.color)")
+        LOGGER.info(f"[Camera] Alignment: rs.align(rs.stream.color)")
         # self.__alignment = rs.align(rs.stream.depth)
 
         # Configurations
+        depth_width,depth_height = depth_resolution.value
+        color_width,color_height = color_resolution.value
+        LOGGER.info(f"[Camera] Depth resolution set to: {depth_resolution.value}")
+        LOGGER.info(f"[Camera] Color resolution set to: {color_resolution.value}")
+
         self.__config.enable_stream(
-            rs.stream.depth, width, height, rs.format.z16, framerate
+            rs.stream.depth, depth_width, depth_height, rs.format.z16, framerate
         )
-        LOGGER.info("Enabled depth stream.")
+        LOGGER.info("[Camera] Enabled depth stream.")
         self.__config.enable_stream(
-            rs.stream.color, width, height, rs.format.bgr8, framerate
+            rs.stream.color, color_width, color_height, rs.format.bgr8, framerate
         )
-        LOGGER.info("Enabled color stream.")
+        LOGGER.info("[Camera] Enabled color stream.")
 
         # Protected
-        self._width = width
-        self._height = height
+        self._width = color_width
+        self._height = color_height
         self._format = format
-        LOGGER.info(f"Width set to: {width}")
-        LOGGER.info(f"Height set to: {height}")
-        LOGGER.info(f"Format set to: {format}")
+        LOGGER.info(f"[Camera] Width set to: {self._width}")
+        LOGGER.info(f"[Camera] Height set to: {self._height}")
+        LOGGER.info(f"[Camera] Format set to: {format}")
 
         if self.__device != "D400":
             LOGGER.warning(
-                f"Found {self.__device}, which is not supported for use with the class RealSenseD435Facet. Please connect a RealSense D400 series device!"
+                f"[Camera] Found {self.__device}, which is not supported for use with the class RealSenseD435Facet. Please connect a RealSense D400 series device!"
             )
         else:
             try:
                 self.start_pipeline()
                 self.__running = True
-            except:
-                LOGGER.error("Unkown Error. Starting pipeline failed.")
+            except Exception as e:
+                LOGGER.error(f"[Camera] {str(e)}")
+                LOGGER.error("[Camera] Unkown Error. Starting pipeline failed.")
+                exit(1)
 
     def start_pipeline(self) -> None:
         self.__pipeline.start(self.__config)
         self.__starttime: float = time.time()
         # self.__delayed: bool = False
-        LOGGER.info("Pipeline started.")
+        LOGGER.info("[Camera] Pipeline started.")
 
     ### properties ###
     @property
@@ -101,7 +109,7 @@ class RealSenseD435:
 
     def stop_pipeline(self) -> None:
         self.__pipeline.stop()
-        LOGGER.info("Pipeline stopped.")
+        LOGGER.info("[Camera] Pipeline stopped.")
 
     # Dunder
     def __del__(self) -> None:
@@ -126,21 +134,22 @@ class RealSenseD435:
         # Get frames
         try:
             frames: rs.composite_frame = self.__pipeline.wait_for_frames()
+            # Align frames
+            aligned_frames = self.__alignment.process(frames)
+            # Get aligned frames
+            frame_buffer = FrameBuffer(aligned_frames, header=header)
+            return frame_buffer
+
         except RuntimeError as e:
-            LOGGER.error(str(e))
-        # Align frames
-        aligned_frames = self.__alignment.process(frames)
-        # Get aligned frames
-        frame_buffer = FrameBuffer(aligned_frames, header=header)
-
+            LOGGER.error(f"[Camera] {str(e)}")
+        
         # Validate that both frames are valid
-        if (
-            not frame_buffer.aligned_depth_frame
-            or not frame_buffer.aligned_color_frame
-        ):
-            return
+        #if (
+        #    not frame_buffer.aligned_depth_frame
+        #    or not frame_buffer.aligned_color_frame
+        #):
+        #    return
 
-        return frame_buffer
 
 
 def cv_view(frame_rate=1, size=4):
@@ -176,7 +185,7 @@ def buffer_test():
     """A test to ensure the functionalities of the RealSenseD435 buffer."""
     import time
 
-    cam = RealSenseD435()
+    cam = RealSenseD435(framerate=15)
     width = cam.WIDTH
     height = cam.HEIGHT
 

@@ -8,25 +8,27 @@ from ba_code.srv import TakeSnapshotStamped, GetMetrics, ClearFrame
 from sensor_msgs.msg import RegionOfInterest
 from std_msgs.msg import String
 
+from ba.perception.rsd435_node import CAMERA_NS
+
 class DetectionServer:
     """A node to enable the ros network to infere images using CNN's that are trained to detect objects and trash.
 Services:
 /trashnet/detect: Detects trash in an image. CNN based on: https://stackoverflow.com/questions/67302634/how-do-i-load-a-local-model-with-torch-hub-load
 /yolov5/detect: Detects objects in an image. Based on ultralytics:Yolov5 pre-trained model.
 """
-    def __init__(self,outpath:str = "/tmp/detection", inpath:str = "/tmp/rsd435_images"):
+    def __init__(self,outpath:str = "/tmp/detection", inpath:str = f"/tmp/{CAMERA_NS}_images"):
         self.__outpath = outpath
         self.__inpath = inpath
 
         self.__yolov5 = Yolov5Model()
         self.__trashnet = Trashnet()
 
-        snapshot_srv = "/rs_d435/take_snapshot/"
+        snapshot_srv = f"/{CAMERA_NS}/take_snapshot/"
         self.__snapshot_server = rospy.ServiceProxy(snapshot_srv,TakeSnapshotStamped)
 
         self.__init_services()
 
-        print("[INFO] Waiting for /rs_d435/take_snapshot service...")
+        print(f"[INFO] Waiting for /{CAMERA_NS}/take_snapshot service...")
         rospy.wait_for_service(snapshot_srv)
         rospy.loginfo("[INFO] Detection node ready.")
 
@@ -71,7 +73,7 @@ Services:
         result.detection.confidence = df["confidence"]
         result.detection.clsName = [String(data=s) for s in df["name"]]
 
-        get_metrics = rospy.ServiceProxy("/rs_d435/frames/metrics",GetMetrics)
+        get_metrics = rospy.ServiceProxy(f"/{CAMERA_NS}/frames/metrics",GetMetrics)
         distance_metrics = []
         det = result.detection
         for idx,_ in enumerate(det.clsID):
@@ -89,7 +91,7 @@ Services:
         result.detection.metrics = distance_metrics
 
         if clear_buffer:
-            clear_buffer = rospy.ServiceProxy("/rs_d435/frames/clear",ClearFrame)
+            clear_buffer = rospy.ServiceProxy(f"/{CAMERA_NS}/frames/clear",ClearFrame)
             clear_buffer(imgID=imgID)
 
         return result

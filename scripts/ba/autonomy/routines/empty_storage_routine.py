@@ -10,6 +10,7 @@ from ba.autonomy.object_collector import STATIONNAMESPACE
 from ba.tracking.object_tracker import TRACKERNAMESPACE
 
 import ba.autonomy.routines.iroutine as iroutine
+from ba.autonomy.autonomy_logger import AUTONOMYLOGGER as LOGGER
 
 #from ba.utilities.singletons.robot_mover_singleton import get_robot_mover
 class EmptyStorageRoutine(iroutine.IRoutine):
@@ -20,6 +21,6 @@ class EmptyStorageRoutine(iroutine.IRoutine):
         super().__init__(FSM)
 
     def execute(self):
-        print("EmptyStorageRoutine not implemented yet.")
-        print("State transition -> CollectGarbageRoutine")
+        LOGGER.info("EmptyStorageRoutine not implemented yet.")
+        LOGGER.info("State transition -> CollectGarbageRoutine")
         return iroutine.CollectGarbageRoutine()

@@ -7,17 +7,19 @@ from sensor_msgs.msg import RegionOfInterest
 
 import cv2
 
+from ba.perception.rsd435_node import CAMERA_NS
+
 def roi_filter(roi: RegionOfInterest, max_width: float = 100, max_height: float = 100):
     return roi.width <= max_width and roi.height <= max_height
 
 class ObjectScout:
     """A server node that takes an image of a scene and processes the data to detect objects and trash in the scene."""
     def __init__(self, roi_filter: callable = roi_filter):
-        self.__snapshot_req = rospy.ServiceProxy("/rs_d435/take_snapshot",basrv.TakeSnapshotStamped)
-        self.__clear_frame_req = rospy.ServiceProxy("/rs_d435/frames/clear",basrv.ClearFrame)
+        self.__snapshot_req = rospy.ServiceProxy(f"/{CAMERA_NS}/take_snapshot",basrv.TakeSnapshotStamped)
+        self.__clear_frame_req = rospy.ServiceProxy(f"/{CAMERA_NS}/frames/clear",basrv.ClearFrame)
         self.__detect_req = rospy.ServiceProxy("/yolov5/detect",basrv.Detect)
         self.__trash_req = rospy.ServiceProxy("/trashnet/detect",basrv.Detect)
-        self.__pixel_to_point3d_req = rospy.ServiceProxy("/rs_d435/frames/deproject_pixel_to_point3d",basrv.PixelToPoint3D)
+        self.__pixel_to_point3d_req = rospy.ServiceProxy(f"/{CAMERA_NS}/frames/deproject_pixel_to_point3d",basrv.PixelToPoint3D)
         self.__add_object_req = rospy.ServiceProxy("/object_tracker/add",basrv.AddObject)
         self.__rate = rospy.Rate(0.5)
 
@@ -29,7 +31,7 @@ class ObjectScout:
             imgID = snap_resp.imgID
             header = snap_resp.header
 
-            im = cv2.imread(f"/tmp/rsd435_images/color_{imgID}.jpg")
+            im = cv2.imread(f"/tmp/{CAMERA_NS}_images/color_{imgID}.jpg")
             imcp = im.copy()
 
             obj_lst = []
@@ -71,7 +73,7 @@ class ObjectScout:
                     pnt1 = (roi.x_offset,roi.y_offset)
                     pnt2 = (roi.x_offset + roi.width,roi.y_offset + roi.height)
                     imcp = cv2.rectangle(imcp,pnt1,pnt2,c,2)
-                cv2.imwrite(f"/tmp/rsd435_images/marked_{imgID}.jpg",imcp)
+                cv2.imwrite(f"/tmp/{CAMERA_NS}_images/marked_{imgID}.jpg",imcp)
             print(f"Marked image saved. {imgID}")
 
             for obj in obj_lst:
