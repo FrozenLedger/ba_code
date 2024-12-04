@@ -13,6 +13,21 @@ rosrun tf static_transform_publisher 0.12 0 -0.07 1.5708 0 1.5708 base_link worl
 * usb connection -> camera
 * usb -> lidar (usually: /dev/ttyUSB0)
 
+## Required Packages:
+sudo apt-get install ros-noetic-realsense2-camera
+sudo apt-get install ros-noetic-realsense2-description
+sudo apt-get install ros-noetic-amcl
+sudo apt-get install ros-noetic-move-base
+sudo apt-get install ros-noetic-slam-toolbox
+
+## Required specific Pytorch installation for Jetson Devices:
+Follow instructions at:
+    https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html
+
+## Required Python Packages
+pip3 install numpy-quaternion
+pip install -U yolov5 # source: https://huggingface.co/turhancan97/yolov5-detect-trash-classification
+
 ## CUDA installation for Jetson NX Xavier:
 https://www.seeedstudio.com/blog/2020/07/29/install-cuda-11-on-jetson-nano-and-xavier-nx/?srsltid=AfmBOoqUfbfqZSXzyQKox-F6KxN1O3cNPoEd-Hyv_gwkOmrrB5d_6Wcq
 
