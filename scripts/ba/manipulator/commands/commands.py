@@ -29,10 +29,18 @@ DELAY = 3
 class StateTransitionCommand(ACommand):
     def __init__(self):
         self._robotarm = RobotarmController()
-        self._positions =   [[178, 191, 240, 101, 306],
-                            [266, 178, 238, 92, 306],
-                            [267, 175, 180, 89, 306],
-                            [266, 179, 89, 86, 439]]
+        self._positions =   [[178, 191, 240, 101, 230], # open := 230 # old value was 306
+                            [266, 178, 238, 92, 230],
+                            [267, 175, 180, 89, 230],
+                            [267, 175, 180, 89, 100],
+                            [266, 179, 89, 86, 100],
+                            ### reverse ###
+                            [266, 179, 89, 86, 230],
+                            [267, 175, 180, 89, 230],
+                            [267, 175, 180, 89, 230],
+                            [266, 178, 238, 92, 230],
+                            [178, 191, 240, 101, 230],
+                            ] # close := 230 # old value was 439
             
     def execute(self):
         global STATE
@@ -42,12 +50,12 @@ class StateTransitionCommand(ACommand):
         print("Acquired")
         if lock:
             if STATE == 0:
-                for position in self._positions:
+                for position in self._positions[0:5]:
                     self._robotarm.set_positions_deg(position)
                     time.sleep(DELAY)
                 STATE = 1
             elif STATE == 1:
-                for position in reversed(self._positions):
+                for position in self._positions[5::]: #reversed(self._positions):
                     self._robotarm.set_positions_deg(position)
                     time.sleep(DELAY)
                 STATE = 0
