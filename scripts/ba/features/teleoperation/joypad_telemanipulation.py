@@ -18,21 +18,39 @@ class XBoxButtons(Enum):
     LA = 9
     RA = 10
 
+DEFAULT_COMMANDS = {
+    XBoxButtons.A.value: PrintCommand(msg="A pressed."),
+    XBoxButtons.B.value: PrintCommand(msg="B pressed."),
+    XBoxButtons.X.value: PrintCommand(msg="X pressed."),
+    XBoxButtons.Y.value: PrintCommand(msg="Y pressed."),
+    XBoxButtons.LB.value: PrintCommand(msg="LB pressed."),
+    XBoxButtons.RB.value: PrintCommand(msg="RB pressed."),
+    XBoxButtons.Menu.value: PrintCommand(msg="Menu pressed."),
+    XBoxButtons.LA.value: PrintCommand(msg="LA pressed."),
+    XBoxButtons.RA.value: PrintCommand(msg="RA pressed.")
+}
+
 class JoypadGripperNode:
-    commands = {
-        XBoxButtons.A.value: LogJointsPositionsCommand(),
-        XBoxButtons.B.value: StateTransitionCommand(),
-        XBoxButtons.X.value: PrintCommand(msg="X pressed."),
-        XBoxButtons.Y.value: ToggleEnableTorqueCommand(),
-        XBoxButtons.LB.value: PrintCommand(msg="LB pressed."),
-        XBoxButtons.RB.value: PrintCommand(msg="RB pressed."),
-        XBoxButtons.Menu.value: PrintCommand(msg="Menu pressed."),
-        XBoxButtons.LA.value: PrintCommand(msg="LA pressed."),
-        XBoxButtons.RA.value: PrintCommand(msg="RA pressed.")
-    }
+    #commands = {
+    #    XBoxButtons.A.value: LogJointsPositionsCommand(),
+    #    XBoxButtons.B.value: StateTransitionCommand(),
+    #    XBoxButtons.X.value: PrintCommand(msg="X pressed."),
+    #    XBoxButtons.Y.value: ToggleEnableTorqueCommand(),
+    #    XBoxButtons.LB.value: PrintCommand(msg="LB pressed."),
+    #    XBoxButtons.RB.value: PrintCommand(msg="RB pressed."),
+    #    XBoxButtons.Menu.value: PrintCommand(msg="Menu pressed."),
+    #    XBoxButtons.LA.value: PrintCommand(msg="LA pressed."),
+    #    XBoxButtons.RA.value: PrintCommand(msg="RA pressed.")
+    #}
+
+    @property
+    def commands(self):
+        return self._commands
 
     """A node that takes inputs from the /joy topic and sends further control signals to the /cmd_vel topic in order to control its move behaviour."""
-    def __init__(self) -> None:
+    def __init__(self,commands=DEFAULT_COMMANDS) -> None:
+        self._commands = commands
+
         self.subscriber: rospy.Subscriber = rospy.Subscriber("/joy",Joy,self._publisher_cb)
         LOGGER.info(f"<{type(self).__name__}> Subscriber initialized for topic: /joy.")
         LOGGER.info(f"{type(self).__name__} was created.")
@@ -47,6 +65,26 @@ class JoypadGripperNode:
     def __del__(self) -> None:
         pass
         #LOGGER.info(f"{type(self).__name__} was destroyed.")
+
+if __name__ == "__main__":
+    rospy.init_node("joypad_manipulator")
+
+    progStateTransCMD = ProgressiveStateTransitionCommand() # LoopCommand(ProgressiveStateTransitionCommand())
+
+    commands = {
+        XBoxButtons.A.value: UndoCommand(progStateTransCMD), #LogJointsPositionsCommand(),
+        XBoxButtons.B.value: StateTransitionCommand(),
+        XBoxButtons.X.value: progStateTransCMD, #PrintCommand(msg="X pressed."),
+        XBoxButtons.Y.value: ToggleEnableTorqueCommand(),
+        XBoxButtons.LB.value: PrintCommand(msg="LB pressed."),
+        XBoxButtons.RB.value: PrintCommand(msg="RB pressed."),
+        XBoxButtons.Menu.value: PrintCommand(msg="Menu pressed."),
+        XBoxButtons.LA.value: PrintCommand(msg="LA pressed."),
+        XBoxButtons.RA.value: PrintCommand(msg="RA pressed.")
+    }
+
+    joypadgripper = JoypadGripperNode(commands=commands)
+    rospy.spin()
 
 """
 class JoypadGripper:
@@ -166,7 +204,3 @@ def trans_2_1(gripper:GrabBehaviour):
     rospy.loginfo("Wait for movement to stop...")
     sleep(s)
 """
-if __name__ == "__main__":
-    rospy.init_node("joypad_manipulator")
-    joypadgripper = JoypadGripperNode()
-    rospy.spin()

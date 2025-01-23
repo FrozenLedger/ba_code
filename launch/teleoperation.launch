@@ -4,5 +4,5 @@
         <param name="dev" value="$(arg dev)" />
     </node>
     <node pkg="ba_code" type="joypad_teleoperation.py" name="joypad_teleoperation" output="screen"></node>
-    <!-- node pkg="ba_code" type="joypad_telemanipulation.py" name="joypad_telemanipulation" output="screen"></node -->
+    <node pkg="ba_code" type="joypad_telemanipulation.py" name="joypad_telemanipulation" output="screen"></node>
 </launch>
